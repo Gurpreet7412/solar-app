@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "solar-invests",
-    "slug": "snack-2077e70e-fb9a-427c-b5ed-61b40d704db1",
+    "name": "Solar Invest",
+    "slug": "solar-invest-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.gurpreet.solarinvest"
     },
     "web": {
       "favicon": "./assets/favicon.png"
