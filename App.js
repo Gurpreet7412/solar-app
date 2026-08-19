@@ -32,8 +32,15 @@ export default function App() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [upiId, setUpiId] = useState('');
 
-  const upiAddress = "payment@upi"; // Yahan apni UPI ID badal sakte hain
-  const telegramSupportUrl = "https://t.me/your_support_handle"; // Yahan Telegram link badal sakte hain
+  // --- AAPKI DETAILS CONFIGURED ---
+  const upiList = [
+    { id: '7412881011-4@ibl', name: 'PhonePe / Primary' },
+    { id: '7412881011-2@ybl', name: 'PhonePe / Secondary' }
+  ];
+  const [selectedUpi, setSelectedUpi] = useState(upiList[0]);
+
+  const telegramSupportUrl = "https://t.me/your_support_handle"; // Apna Telegram link
+  const whatsappNumber = "917412881011"; // Aapka WhatsApp Number
 
   const plans = [
     { id: 1, name: 'Solar Micro 15D', daily: '₹25', days: '15 Days', price: 200, type: '15days', tag: '🔥 Hot' },
@@ -58,6 +65,10 @@ export default function App() {
     }
   };
 
+  const handleCopyUpi = () => {
+    Alert.alert('UPI ID Copied', `${selectedUpi.id}\n\nAb aap ise kisi bhi payment app mein paste kar sakte hain.`);
+  };
+
   const handleRechargeSubmit = () => {
     if (!rechargeAmount || !utrNumber) {
       Alert.alert('Error', 'Please enter Amount and 12-digit UTR Number');
@@ -65,7 +76,7 @@ export default function App() {
     }
     Alert.alert(
       'Recharge Submitted',
-      `Payment of ₹${rechargeAmount} with UTR: ${utrNumber} submitted for verification. Balance will update shortly.`,
+      `Payment of ₹${rechargeAmount} with UTR: ${utrNumber} submitted to ${selectedUpi.name}. Balance will update shortly.`,
       [{ text: 'OK', onPress: () => { setRechargeModal(false); setRechargeAmount(''); setUtrNumber(''); } }]
     );
   };
@@ -96,7 +107,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-      {/* Header with App Logo */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBadge}>
           <Image
@@ -118,7 +129,7 @@ export default function App() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Wallet Balance Hero Card */}
+        {/* Wallet Hero Card */}
         <View style={styles.walletCard}>
           <View style={styles.walletGlow} />
           <View style={styles.walletHeader}>
@@ -188,23 +199,49 @@ export default function App() {
         ))}
       </ScrollView>
 
-      {/* Recharge Modal with UPI QR */}
+      {/* Recharge Modal with Multiple UPI & Dynamic QR */}
       <Modal visible={rechargeModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Deposit / Recharge</Text>
             
-            <View style={styles.qrContainer}>
-              <Image
-                source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${upiAddress}&pn=SolarInvest` }}
-                style={styles.qrImage}
-              />
-              <Text style={styles.qrInstruction}>Scan QR via PhonePe / GPay / Paytm</Text>
+            {/* Multiple UPI Selection Buttons */}
+            <View style={styles.upiSelectorContainer}>
+              {upiList.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.upiSelectBtn,
+                    selectedUpi.id === item.id && styles.upiSelectBtnActive
+                  ]}
+                  onPress={() => setSelectedUpi(item)}
+                >
+                  <Text style={[
+                    styles.upiSelectText,
+                    selectedUpi.id === item.id && styles.upiSelectTextActive
+                  ]}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
+            {/* Dynamic QR Code */}
+            <View style={styles.qrContainer}>
+              <Image
+                source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${selectedUpi.id}&pn=SolarInvest` }}
+                style={styles.qrImage}
+              />
+              <Text style={styles.qrInstruction}>Scan via PhonePe / GPay / Paytm</Text>
+            </View>
+
+            {/* UPI ID + Copy Button */}
             <View style={styles.upiInfoBox}>
-              <Text style={styles.upiLabel}>UPI ID: </Text>
-              <Text style={styles.upiText}>{upiAddress}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.upiLabel}>UPI ID ({selectedUpi.name}):</Text>
+                <Text style={styles.upiText} numberOfLines={1}>{selectedUpi.id}</Text>
+              </View>
+              <TouchableOpacity style={styles.copyBtn} onPress={handleCopyUpi}>
+                <Text style={styles.copyBtnText}>📋 Copy</Text>
+              </TouchableOpacity>
             </View>
 
             <TextInput
@@ -218,7 +255,7 @@ export default function App() {
 
             <TextInput
               style={styles.input}
-              placeholder="Enter 12-Digit UTR / Transaction No."
+              placeholder="Enter 12-Digit UTR Number"
               placeholderTextColor="#94a3b8"
               keyboardType="numeric"
               value={utrNumber}
@@ -271,7 +308,7 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* Customer Support Modal */}
+      {/* Official Support Modal */}
       <Modal visible={supportModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -289,7 +326,7 @@ export default function App() {
 
             <TouchableOpacity
               style={[styles.submitModalBtn, { backgroundColor: '#16a34a' }]}
-              onPress={() => Linking.openURL("https://wa.me/910000000000")}
+              onPress={() => Linking.openURL(`https://wa.me/${whatsappNumber}`)}
             >
               <Text style={styles.submitModalBtnText}>💬 WhatsApp Support</Text>
             </TouchableOpacity>
@@ -301,7 +338,7 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Nav */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => setActiveNav('home')}>
           <Text style={styles.navIcon}>⚡</Text>
@@ -430,19 +467,56 @@ const styles = StyleSheet.create({
     padding: 22,
   },
   modalTitle: { fontSize: 19, fontWeight: 'bold', textAlign: 'center', marginBottom: 14, color: '#0f172a' },
-  qrContainer: { alignItems: 'center', marginBottom: 14 },
-  qrImage: { width: 180, height: 180, borderRadius: 12 },
-  qrInstruction: { fontSize: 12, color: '#64748b', marginTop: 8, fontWeight: '500' },
+  upiSelectorContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  upiSelectBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  upiSelectBtnActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  upiSelectText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  upiSelectTextActive: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  qrContainer: { alignItems: 'center', marginBottom: 12 },
+  qrImage: { width: 170, height: 170, borderRadius: 12 },
+  qrInstruction: { fontSize: 11, color: '#64748b', marginTop: 6, fontWeight: '500' },
   upiInfoBox: {
     backgroundColor: '#f1f5f9',
     padding: 10,
     borderRadius: 10,
     marginBottom: 14,
     flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  upiLabel: { color: '#64748b', fontWeight: '600' },
-  upiText: { color: '#0f172a', fontWeight: 'bold' },
+  upiLabel: { color: '#64748b', fontWeight: '600', fontSize: 11 },
+  upiText: { color: '#0f172a', fontWeight: 'bold', fontSize: 13 },
+  copyBtn: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  copyBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 11 },
   input: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
@@ -464,20 +538,4 @@ const styles = StyleSheet.create({
   submitModalBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 15 },
   closeModalBtn: { marginTop: 10, alignItems: 'center', padding: 8 },
   closeModalBtnText: { color: '#64748b', fontWeight: '600' },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#1e293b',
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
-    paddingVertical: 10,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  navItem: { flex: 1, alignItems: 'center' },
-  navIcon: { fontSize: 18 },
-  navText: { fontSize: 11, color: '#64748b', marginTop: 2 },
-  activeNavText: { color: '#38bdf8', fontWeight: 'bold' },
-});
-                        
+  bott
