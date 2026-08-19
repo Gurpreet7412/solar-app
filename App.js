@@ -1,156 +1,348 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput, 
-  Modal, 
-  Alert, 
-  SafeAreaView, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+  SafeAreaView,
   StatusBar,
-  Linking
+  Linking,
+  Image
 } from 'react-native';
 
 export default function App() {
-  const [balance, setBalance] = useState(0);
-  const [dailyEarnings, setDailyEarnings] = useState(0);
-  const [totalInvested, setTotalInvested] = useState(0);
+  const [balance, setBalance] = useState(1100.00);
+  const [activeTab, setActiveTab] = useState('All');
+  const [bottomNav, setBottomNav] = useState('Invest');
   const [modalVisible, setModalVisible] = useState(false);
+  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedUpi, setSelectedUpi] = useState('deepsingh7412@ibl');
   const [transactionId, setTransactionId] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawUpi, setWithdrawUpi] = useState('');
 
   const plans = [
-    { id: 1, name: 'Solar Starter', price: 1000, daily: 50, days: 30, total: 1500 },
-    { id: 2, name: 'Solar Pro', price: 3000, daily: 165, days: 30, total: 4950 },
-    { id: 3, name: 'Solar Max', price: 5000, daily: 300, days: 30, total: 9000 },
-    { id: 4, name: 'Mega Solar Plant', price: 10000, daily: 650, days: 30, total: 19500 },
+    {
+      id: 1,
+      badge: '🔥 Hot',
+      duration: '15 Days',
+      daysCount: 15,
+      name: 'Solar Micro 15D',
+      price: 200,
+      daily: 25,
+      category: '15 Days'
+    },
+    {
+      id: 2,
+      badge: '⭐ Popular',
+      duration: '15 Days',
+      daysCount: 15,
+      name: 'Solar Mini 15D',
+      price: 400,
+      daily: 55,
+      category: '15 Days'
+    },
+    {
+      id: 3,
+      badge: '🚀 High Return',
+      duration: '15 Days',
+      daysCount: 15,
+      name: 'Solar Boost 15D',
+      price: 800,
+      daily: 120,
+      category: '15 Days'
+    },
+    {
+      id: 4,
+      badge: '🌱 Stable',
+      duration: '30 Days',
+      daysCount: 30,
+      name: 'Solar Plant 30D',
+      price: 1500,
+      daily: 240,
+      category: '30 Days'
+    },
+    {
+      id: 5,
+      badge: '👑 Mega Yield',
+      duration: '30 Days',
+      daysCount: 30,
+      name: 'Solar Farm Max',
+      price: 3000,
+      daily: 520,
+      category: '30 Days'
+    }
   ];
+
+  const filteredPlans = activeTab === 'All' 
+    ? plans 
+    : plans.filter(p => p.category === activeTab);
+
+  const openWhatsAppSupport = () => {
+    const url = 'https://wa.me/917412881011?text=Hello%20Solar%20Invest%20Support,%20I%20need%20assistance.';
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Customer Support', 'Contact WhatsApp: +91 7412881011');
+    });
+  };
 
   const handleInvestPress = (plan) => {
     setSelectedPlan(plan);
     setModalVisible(true);
   };
 
-  const handlePaymentSubmit = () => {
+  const handleDepositSubmit = () => {
     if (!transactionId.trim()) {
-      Alert.alert('Error', 'Kripya apna 12-digit UTR / Transaction ID enter karein.');
+      Alert.alert('Required', 'Kripya apna 12-digit UTR / Ref No. enter karein.');
       return;
     }
     Alert.alert(
-      'Payment Submitted', 
-      `Aapki request ${selectedPlan?.name} ke liye receive ho gayi hai. Admin verification ke baad balance update ho jayega.`
+      'Deposit Received',
+      `Payment request for ₹${selectedPlan ? selectedPlan.price : 'Recharge'} submitted successfully. Admin verification under process.`
     );
     setModalVisible(false);
     setTransactionId('');
   };
 
-  const openWhatsAppSupport = () => {
-    const url = 'https://wa.me/917412881011?text=Hello%20Solar%20Invest%20Support,%20I%20need%20help%20with%20my%20account.';
-    Linking.openURL(url).catch(() => {
-      Alert.alert('Error', 'WhatsApp open nahi ho paya. Number: +91 7412881011');
-    });
+  const handleWithdrawSubmit = () => {
+    if (!withdrawAmount || Number(withdrawAmount) < 200) {
+      Alert.alert('Invalid Amount', 'Minimum withdrawal limit ₹200 hai.');
+      return;
+    }
+    if (!withdrawUpi.trim()) {
+      Alert.alert('Required', 'Apna UPI ID enter karein.');
+      return;
+    }
+    if (Number(withdrawAmount) > balance) {
+      Alert.alert('Insufficient Balance', 'Aapke wallet me paryapt balance nahi hai.');
+      return;
+    }
+    setBalance(prev => prev - Number(withdrawAmount));
+    Alert.alert('Success', `₹${withdrawAmount} withdrawal request received. 24 hours me credit ho jayega.`);
+    setWithdrawModalVisible(false);
+    setWithdrawAmount('');
+    setWithdrawUpi('');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-      
+      <StatusBar barStyle="light-content" backgroundColor="#0e1726" />
+
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Solar Invest</Text>
-          <Text style={styles.headerSubtitle}>Earn Green, Live Clean</Text>
+        <View style={styles.headerLeft}>
+          <Image 
+            source={require('./adaptive-icon.png')} 
+            style={styles.headerLogo} 
+            defaultSource={require('./icon.png')}
+          />
+          <View>
+            <Text style={styles.logoTitle}>
+              SOLAR <Text style={styles.logoTitleHighlight}>INVEST</Text>
+            </Text>
+            <Text style={styles.logoSubtitle}>Clean Energy Growth</Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.supportBadge} onPress={openWhatsAppSupport}>
-          <Text style={styles.supportBadgeText}>💬 Support</Text>
+
+        <TouchableOpacity style={styles.helpBtn} onPress={openWhatsAppSupport}>
+          <Text style={styles.helpBtnText}>🎧 Help</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Dashboard Balance Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Available Balance</Text>
-          <Text style={styles.cardBalance}>₹{balance.toLocaleString()}</Text>
-          <View style={styles.cardRow}>
-            <View>
-              <Text style={styles.subTextLabel}>Daily Earnings</Text>
-              <Text style={styles.subTextValue}>₹{dailyEarnings}</Text>
-            </View>
-            <View>
-              <Text style={styles.subTextLabel}>Total Invested</Text>
-              <Text style={styles.subTextValue}>₹{totalInvested}</Text>
-            </View>
-          </View>
-        </View>
+      {/* Main Content Area */}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer} 
+        showsVerticalScrollIndicator={false}
+      >
+        {bottomNav === 'Invest' && (
+          <>
+            {/* Wallet Balance Card */}
+            <View style={styles.walletCard}>
+              <View style={styles.walletTopRow}>
+                <Text style={styles.walletLabel}>TOTAL WALLET BALANCE</Text>
+                <View style={styles.activeTag}>
+                  <View style={styles.greenDot} />
+                  <Text style={styles.activeTagText}>Active</Text>
+                </View>
+              </View>
 
-        {/* Investment Plans */}
-        <Text style={styles.sectionTitle}>Investment Plans</Text>
-        {plans.map((plan) => (
-          <View key={plan.id} style={styles.planCard}>
-            <View style={styles.planHeader}>
-              <Text style={styles.planName}>{plan.name}</Text>
-              <Text style={styles.planPrice}>₹{plan.price.toLocaleString()}</Text>
+              <Text style={styles.walletAmount}>₹{balance.toFixed(2)}</Text>
+
+              <View style={styles.walletActionsRow}>
+                <TouchableOpacity 
+                  style={styles.rechargeBtn}
+                  onPress={() => {
+                    setSelectedPlan({ name: 'Wallet Recharge', price: 500 });
+                    setModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.rechargeBtnText}>⚡ + Recharge</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.withdrawBtn}
+                  onPress={() => setWithdrawModalVisible(true)}
+                >
+                  <Text style={styles.withdrawBtnText}>↗ Withdraw</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.planDetails}>
-              <Text style={styles.planDetailText}>⚡ Daily Income: ₹{plan.daily}</Text>
-              <Text style={styles.planDetailText}>📅 Validity: {plan.days} Days</Text>
-              <Text style={styles.planDetailText}>💰 Total Return: ₹{plan.total.toLocaleString()}</Text>
+
+            {/* Filter Tabs */}
+            <View style={styles.tabsRow}>
+              {['All', '15 Days', '30 Days'].map((tab) => (
+                <TouchableOpacity
+                  key={tab}
+                  style={[
+                    styles.tabItem,
+                    activeTab === tab && styles.tabItemActive
+                  ]}
+                  onPress={() => setActiveTab(tab)}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === tab && styles.tabTextActive
+                    ]}
+                  >
+                    {tab === 'All' ? 'All Plans' : tab}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <TouchableOpacity style={styles.investBtn} onPress={() => handleInvestPress(plan)}>
-              <Text style={styles.investBtnText}>Invest Now</Text>
+
+            {/* Plans List */}
+            {filteredPlans.map((plan) => (
+              <View key={plan.id} style={styles.planCard}>
+                <View style={styles.planCardHeader}>
+                  <View style={styles.badgeWrapper}>
+                    <Text style={styles.badgeText}>{plan.badge}</Text>
+                  </View>
+                  <Text style={styles.durationText}>⏱ {plan.duration}</Text>
+                </View>
+
+                <View style={styles.planContentRow}>
+                  <View>
+                    <Text style={styles.planName}>{plan.name}</Text>
+                    <Text style={styles.dailyText}>
+                      Daily Earning: <Text style={styles.dailyHighlight}>₹{plan.daily}</Text>
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.investActionBtn}
+                    onPress={() => handleInvestPress(plan)}
+                  >
+                    <Text style={styles.investActionBtnText}>Invest ₹{plan.price}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
+
+        {bottomNav === 'Invite' && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionHeading}>Invite Friends & Earn</Text>
+            <Text style={styles.sectionSub}>Get 10% direct commission when your friends invest.</Text>
+            <TouchableOpacity 
+              style={styles.whatsappBtn}
+              onPress={() => Alert.alert('Share Link', 'Share referral link via WhatsApp')}
+            >
+              <Text style={styles.whatsappBtnText}>🎁 Share Referral Code</Text>
             </TouchableOpacity>
           </View>
-        ))}
+        )}
 
-        {/* Customer Support Banner */}
-        <View style={styles.supportCard}>
-          <Text style={styles.supportCardTitle}>Need Help or Fast Deposit Approval?</Text>
-          <Text style={styles.supportCardSub}>24/7 Official Customer Support available on WhatsApp</Text>
-          <TouchableOpacity style={styles.whatsappBtn} onPress={openWhatsAppSupport}>
-            <Text style={styles.whatsappBtnText}>Chat on WhatsApp (+91 7412881011)</Text>
-          </TouchableOpacity>
-        </View>
+        {bottomNav === 'Help' && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionHeading}>Customer Support</Text>
+            <Text style={styles.sectionSub}>24/7 dedicated support team available for deposit & withdrawal inquiries.</Text>
+            <TouchableOpacity style={styles.whatsappBtn} onPress={openWhatsAppSupport}>
+              <Text style={styles.whatsappBtnText}>💬 Chat on WhatsApp (+91 7412881011)</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {bottomNav === 'Profile' && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionHeading}>User Profile</Text>
+            <Text style={styles.sectionSub}>Wallet Balance: ₹{balance.toFixed(2)}</Text>
+            <Text style={styles.sectionSub}>Status: Verified Active Investor</Text>
+            <TouchableOpacity style={styles.whatsappBtn} onPress={openWhatsAppSupport}>
+              <Text style={styles.whatsappBtnText}>Need Help with Account?</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Deposit & Payment Modal */}
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomNav}>
+        {[
+          { id: 'Invest', label: 'Invest', icon: '⚡' },
+          { id: 'Invite', label: 'Invite', icon: '🎁' },
+          { id: 'Help', label: 'Help', icon: '🎧' },
+          { id: 'Profile', label: 'Profile', icon: '👤' }
+        ].map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.navItem}
+            onPress={() => {
+              if (item.id === 'Help') {
+                openWhatsAppSupport();
+              } else {
+                setBottomNav(item.id);
+              }
+            }}
+          >
+            <Text style={[styles.navIcon, bottomNav === item.id && styles.navTextActive]}>
+              {item.icon}
+            </Text>
+            <Text style={[styles.navLabel, bottomNav === item.id && styles.navTextActive]}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Recharge/Deposit Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Deposit & Invest</Text>
+            <Text style={styles.modalTitle}>Recharge & Invest</Text>
             {selectedPlan && (
               <Text style={styles.modalPlanInfo}>
-                Plan: <Text style={{fontWeight: 'bold', color: '#0f172a'}}>{selectedPlan.name}</Text> | Amount: <Text style={{fontWeight: 'bold', color: '#16a34a'}}>₹{selectedPlan.price}</Text>
+                {selectedPlan.name} | Amount: <Text style={{ color: '#16a34a', fontWeight: 'bold' }}>₹{selectedPlan.price}</Text>
               </Text>
             )}
 
-            <Text style={styles.selectUpiLabel}>Select UPI ID for Payment:</Text>
+            <Text style={styles.upiSelectLabel}>Select Official UPI ID:</Text>
             
-            {/* UPI Option 1 */}
-            <TouchableOpacity 
-              style={[styles.upiChoice, selectedUpi === 'deepsingh7412@ibl' && styles.upiChoiceActive]}
+            <TouchableOpacity
+              style={[styles.upiOption, selectedUpi === 'deepsingh7412@ibl' && styles.upiOptionActive]}
               onPress={() => setSelectedUpi('deepsingh7412@ibl')}
             >
-              <Text style={styles.upiChoiceText}>1. deepsingh7412@ibl</Text>
+              <Text style={styles.upiOptionText}>1. deepsingh7412@ibl</Text>
             </TouchableOpacity>
 
-            {/* UPI Option 2 */}
-            <TouchableOpacity 
-              style={[styles.upiChoice, selectedUpi === 'mandeep7412@axl' && styles.upiChoiceActive]}
+            <TouchableOpacity
+              style={[styles.upiOption, selectedUpi === 'mandeep7412@axl' && styles.upiOptionActive]}
               onPress={() => setSelectedUpi('mandeep7412@axl')}
             >
-              <Text style={styles.upiChoiceText}>2. mandeep7412@axl</Text>
+              <Text style={styles.upiOptionText}>2. mandeep7412@axl</Text>
             </TouchableOpacity>
 
-            <View style={styles.activeUpiBox}>
-              <Text style={styles.activeUpiSub}>Pay on selected ID:</Text>
-              <Text style={styles.activeUpiVal}>{selectedUpi}</Text>
+            <View style={styles.selectedUpiCard}>
+              <Text style={styles.selectedUpiHeading}>Transfer to:</Text>
+              <Text style={styles.selectedUpiValue}>{selectedUpi}</Text>
             </View>
 
             <TextInput
-              style={styles.input}
+              style={styles.textInput}
               placeholder="Enter 12-digit UTR / Ref No."
               placeholderTextColor="#94a3b8"
               value={transactionId}
@@ -158,12 +350,47 @@ export default function App() {
               keyboardType="number-pad"
             />
 
-            <TouchableOpacity style={styles.submitModalBtn} onPress={handlePaymentSubmit}>
-              <Text style={styles.submitModalBtnText}>Submit Deposit Details</Text>
+            <TouchableOpacity style={styles.submitBtn} onPress={handleDepositSubmit}>
+              <Text style={styles.submitBtnText}>Submit Deposit Details</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeModalBtnText}>Cancel</Text>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Withdrawal Modal */}
+      <Modal visible={withdrawModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Withdraw Balance</Text>
+            <Text style={styles.modalPlanInfo}>Available Balance: ₹{balance.toFixed(2)}</Text>
+
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter Amount (Min ₹200)"
+              placeholderTextColor="#94a3b8"
+              value={withdrawAmount}
+              onChangeText={setWithdrawAmount}
+              keyboardType="number-pad"
+            />
+
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter Your UPI ID"
+              placeholderTextColor="#94a3b8"
+              value={withdrawUpi}
+              onChangeText={setWithdrawUpi}
+            />
+
+            <TouchableOpacity style={styles.submitBtn} onPress={handleWithdrawSubmit}>
+              <Text style={styles.submitBtnText}>Confirm Withdrawal</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setWithdrawModalVisible(false)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -173,55 +400,322 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
-  header: { 
-    paddingHorizontal: 20, 
-    paddingVertical: 16, 
-    backgroundColor: '#1e293b', 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center' 
+  container: {
+    flex: 1,
+    backgroundColor: '#0e1726',
   },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#f59e0b' },
-  headerSubtitle: { fontSize: 13, color: '#94a3b8', marginTop: 2 },
-  supportBadge: { backgroundColor: '#10b981', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  supportBadgeText: { color: '#ffffff', fontWeight: 'bold', fontSize: 12 },
-  scrollContainer: { padding: 16, paddingBottom: 40 },
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#334155' },
-  cardLabel: { fontSize: 14, color: '#94a3b8' },
-  cardBalance: { fontSize: 32, fontWeight: 'bold', color: '#ffffff', marginVertical: 8 },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 12 },
-  subTextLabel: { fontSize: 12, color: '#94a3b8' },
-  subTextValue: { fontSize: 16, fontWeight: '600', color: '#10b981', marginTop: 2 },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#ffffff', marginBottom: 12 },
-  planCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: '#334155' },
-  planHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  planName: { fontSize: 18, fontWeight: 'bold', color: '#ffffff' },
-  planPrice: { fontSize: 18, fontWeight: 'bold', color: '#f59e0b' },
-  planDetails: { marginBottom: 14 },
-  planDetailText: { fontSize: 13, color: '#cbd5e1', marginBottom: 4 },
-  investBtn: { backgroundColor: '#f59e0b', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-  investBtnText: { color: '#0f172a', fontWeight: 'bold', fontSize: 16 },
-  supportCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginTop: 10, borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
-  supportCardTitle: { fontSize: 16, fontWeight: 'bold', color: '#ffffff', textAlign: 'center' },
-  supportCardSub: { fontSize: 12, color: '#94a3b8', textAlign: 'center', marginTop: 4, marginBottom: 12 },
-  whatsappBtn: { backgroundColor: '#25d366', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, width: '100%', alignItems: 'center' },
-  whatsappBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContent: { backgroundColor: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 360 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, textAlign: 'center' },
-  modalPlanInfo: { fontSize: 13, color: '#64748b', textAlign: 'center', marginBottom: 14 },
-  selectUpiLabel: { fontSize: 12, fontWeight: '600', color: '#475569', marginBottom: 6 },
-  upiChoice: { padding: 10, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, marginBottom: 6 },
-  upiChoiceActive: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
-  upiChoiceText: { fontSize: 13, color: '#0f172a', fontWeight: '500' },
-  activeUpiBox: { backgroundColor: '#f8fafc', padding: 10, borderRadius: 8, marginVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
-  activeUpiSub: { fontSize: 11, color: '#64748b' },
-  activeUpiVal: { fontSize: 15, fontWeight: 'bold', color: '#0f172a', marginTop: 2 },
-  input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, marginBottom: 12, color: '#0f172a' },
-  submitModalBtn: { backgroundColor: '#16a34a', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  submitModalBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 15 },
-  closeModalBtn: { marginTop: 10, alignItems: 'center', paddingVertical: 6 },
-  closeModalBtnText: { color: '#64748b', fontWeight: '600' },
-});
-    
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    backgroundColor: '#0e1726',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerLogo: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  logoTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  logoTitleHighlight: {
+    color: '#f59e0b',
+  },
+  logoSubtitle: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 1,
+  },
+  helpBtn: {
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  helpBtnText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  scrollContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 85,
+  },
+  walletCard: {
+    backgroundColor: '#1b263b',
+    borderRadius: 22,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2e3d5b',
+  },
+  walletTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  walletLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  activeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  greenDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#22c55e',
+    marginRight: 5,
+  },
+  activeTagText: {
+    color: '#22c55e',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  walletAmount: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginVertical: 14,
+  },
+  walletActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  rechargeBtn: {
+    flex: 1,
+    backgroundColor: '#16a34a',
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  rechargeBtnText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  withdrawBtn: {
+    flex: 1,
+    backgroundColor: '#2e3d5b',
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  withdrawBtnText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    backgroundColor: '#162235',
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 16,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  tabItemActive: {
+    backgroundColor: '#2563eb',
+  },
+  tabText: {
+    color: '#94a3b8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  planCard: {
+    backgroundColor: '#1b263b',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#2e3d5b',
+  },
+  planCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeWrapper: {
+    backgroundColor: '#2e3d5b',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#fbbf24',
+  },
+  durationText: {
+    fontSize: 12,
+    color: '#94a3b8',
+  },
+  planContentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  planName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  dailyText: {
+    fontSize: 13,
+    color: '#94a3b8',
+  },
+  dailyHighlight: {
+    color: '#22c55e',
+    fontWeight: 'bold',
+  },
+  investActionBtn: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 12,
+  },
+  investActionBtnText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  sectionCard: {
+    backgroundColor: '#1b263b',
+    borderRadius: 18,
+    padding: 20,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#2e3d5b',
+    alignItems: 'center',
+  },
+  sectionHeading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 6,
+  },
+  sectionSub: {
+    fontSize: 13,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  whatsappBtn: {
+    backgroundColor: '#25d366',
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  whatsappBtnText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 65,
+    backgroundColor: '#0a101d',
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#1e293b',
+  },
+  navItem: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navIcon: {
+    fontSize: 18,
+    color: '#64748b',
+  },
+  navLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  navTextActive: {
+    color: '#38bdf8',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 22,
+    width: '100%',
+    maxWidth: 360,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    textAlign: 'center',
+  },
+  modalPlanInfo: {
+    fontSize: 13,
+    color: '#64748b',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  upiSelectLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 8,
+  },
+  upiOption: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  upiOptionActive: {
+    borderColor: '#16a34a',
+    backgroundColor: '#f0fdf4',
+  },
+  upiOptionText: {
+    fontSize: 13,
+    color: '#0f172a',
+    fontWeight: '600',
+  },
+  selectedUpiCard: {
+    backgroundCol
