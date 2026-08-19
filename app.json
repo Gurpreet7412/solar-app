@@ -5,17 +5,22 @@
     "owner": "guri7412-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "package": "com.gurpreet.solarinvest"
+      "package": "com.gurpreet.solarinvest",
+      "adaptiveIcon": {
+        "foregroundImage": "./adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      }
     },
     "extra": {
       "eas": {
-        "projectId": "eb3e2f6e-c474-489c-a791-8cb39e3259d4"
+        "projectId": "eb3e2f6e-c474-4b5c-a5b7-7c980998f5a2"
       }
     }
   }
