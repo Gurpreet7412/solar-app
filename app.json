@@ -1,26 +1,32 @@
 {
   "expo": {
     "name": "Solar Invest",
-    "slug": "solar-invest-app",
-    "owner": "guri7412-app",
+    "slug": "solar-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a101d"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "package": "com.gurpreet.solarinvest",
       "adaptiveIcon": {
-        "foregroundImage": "./adaptive-icon.png",
-        "backgroundColor": "#0f172a"
-      }
+        "foregroundImage": "./icon.png",
+        "backgroundColor": "#0a101d"
+      },
+      "package": "com.solarinvest.app"
+    },
+    "web": {
+      "favicon": "./icon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "eb3e2f6e-c474-489c-a791-8cb39e3259d4"
+        "projectId": "87440d9e-bc7e-4941-add9-29ceebd21e79"
       }
     }
   }
