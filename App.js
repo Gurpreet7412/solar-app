@@ -1,106 +1,86 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Image, ImageBackground, Share, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Image } from 'react-native';
 
 export default function App() {
-  const [balance, setBalance] = useState(1100.0);
-  const [activeTab, setActiveTab] = useState('All');
-  const [bottomNav, setBottomNav] = useState('Invest');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
-  const [adminModalVisible, setAdminModalVisible] = useState(false);
-  const [adminAuth, setAdminAuth] = useState(false);
-  const [adminPin, setAdminPin] = useState('');
-  
-  const [depositAmount, setDepositAmount] = useState('500');
-  const [selectedUpi, setSelectedUpi] = useState('deepsingh7412@ibl');
-  const [transactionId, setTransactionId] = useState('');
-  const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawUpi, setWithdrawUpi] = useState('');
-  const [myActivePlans, setMyActivePlans] = useState([]);
-  const [depositRequests, setDepositRequests] = useState([]);
-  const [withdrawRequests, setWithdrawRequests] = useState([]);
-  const [history, setHistory] = useState([{ id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }]);
+  const [b, setB] = useState(1100.0), [mR, setMR] = useState(false), [mA, setMA] = useState(false), [pin, setPin] = useState(''), [auth, setAuth] = useState(false);
+  const [plans, setPlans] = useState([
+    { id: 1, name: 'Solar Micro 15D', price: 200, daily: 25, badge: 'Hot' },
+    { id: 2, name: 'Solar Mini 15D', price: 400, daily: 55, badge: 'Popular' },
+    { id: 3, name: 'Solar Boost 15D', price: 800, daily: 120, badge: 'High Return' },
+    { id: 4, name: 'Solar Plant 30D', price: 1500, daily: 240, badge: 'Stable' }
+  ]);
+  const [myPlans, setMyPlans] = useState([]);
+  const today = new Date().toDateString();
 
-  const refLink = 'https://solarinvest.in/register?ref=Guri7412';
-  const todayStr = new Date().toDateString();
-
-  const plans = [
-    { id: 1, badge: '⚡ Fast', duration: '7 Days', name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
-    { id: 2, badge: '⚡ Quick', duration: '7 Days', name: 'Solar Express 7D', price: 300, daily: 65, category: 'Weekly' },
-    { id: 3, badge: '🔥 Hot', duration: '15 Days', name: 'Solar Micro 15D', price: 200, daily: 25, category: '15 Days' },
-    { id: 4, badge: '⭐ Popular', duration: '15 Days', name: 'Solar Mini 15D', price: 400, daily: 55, category: '15 Days' }
-  ];
-
-  const handleClaim = (plan) => {
-    if (plan.lastCollected === todayStr) return Alert.alert('Done', 'Aaj ki income collect kar li hai.');
-    setBalance(b => b + plan.daily);
-    setMyActivePlans(myActivePlans.map(p => p.id === plan.id ? { ...p, lastCollected: todayStr } : p));
-    Alert.alert('Success', '₹' + plan.daily + ' added!');
-  };
-
-  const submitDeposit = () => {
-    setDepositRequests([{ id: Date.now(), amount: depositAmount, utr: transactionId }, ...depositRequests]);
-    Alert.alert('Submitted', 'Verification ke liye pending hai.');
-    setModalVisible(false);
+  const handleClaim = (p) => {
+    if (p.lCol === today) return Alert.alert('Limit', 'Aaj ki earning collect ho chuki hai.');
+    setB(x => x + p.daily);
+    setMyPlans(myPlans.map(x => x.id === p.id ? {...x, lCol: today} : x));
+    Alert.alert('Success', '₹' + p.daily + ' added!');
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a101d' }}>
-      <ImageBackground source={{ uri: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=1080' }} style={{ flex: 1 }}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(10, 16, 29, 0.9)' }}>
-          <View style={{ padding: 20, paddingTop: 40 }}>
-            <Text style={{ color: '#94a3b8', fontSize: 12 }}>TOTAL BALANCE</Text>
-            <Text style={{ color: '#fff', fontSize: 32, fontWeight: 'bold' }}>₹{balance.toFixed(2)}</Text>
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-              <TouchableOpacity style={{ flex: 1, backgroundColor: '#16a34a', padding: 15, borderRadius: 10, alignItems: 'center' }} onPress={() => setModalVisible(true)}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Recharge</Text></TouchableOpacity>
-              <TouchableOpacity style={{ flex: 1, backgroundColor: '#0284c7', padding: 15, borderRadius: 10, alignItems: 'center' }} onPress={() => setWithdrawModalVisible(true)}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Withdraw</Text></TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={() => setAdminModalVisible(true)}><Text style={{ color: '#f59e0b', marginTop: 10, textAlign: 'center' }}>Admin Panel</Text></TouchableOpacity>
-          </View>
-
-          <ScrollView style={{ paddingHorizontal: 20 }}>
-            {myActivePlans.map(ap => (
-              <View key={ap.id} style={{ backgroundColor: '#1e293b', padding: 15, borderRadius: 10, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: '#fff' }}>{ap.name}</Text>
-                <TouchableOpacity onPress={() => collectIncome(ap)}><Text style={{ color: ap.lastCollected === todayStr ? 'gray' : '#22c55e' }}>{ap.lastCollected === todayStr ? 'Collected' : 'Collect'}</Text></TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      </ImageBackground>
-
-      {/* Recharge Modal WITH QR */}
-      <Modal visible={modalVisible} transparent={true}>
-        <View style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 15 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Recharge</Text>
-            <TextInput placeholder="Amount" value={depositAmount} onChangeText={setDepositAmount} style={{ borderBottomWidth: 1, marginVertical: 10 }} />
-            <View style={{ alignItems: 'center', margin: 10 }}>
-               <Image source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${depositAmount}` }} style={{ width: 150, height: 150 }} />
-               <Text>Scan to pay {selectedUpi}</Text>
-            </View>
-            <TextInput placeholder="UTR No" value={transactionId} onChangeText={setTransactionId} style={{ borderBottomWidth: 1, marginVertical: 10 }} />
-            <TouchableOpacity style={{ backgroundColor: '#16a34a', padding: 10, alignItems: 'center' }} onPress={submitDeposit}><Text style={{ color: '#fff' }}>Submit</Text></TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}><Text style={styles.title}>SOLAR INVEST</Text><TouchableOpacity onPress={() => setMA(true)}><Text style={{color:'#1e293b'}}>Admin</Text></TouchableOpacity></View>
+      <ScrollView contentContainerStyle={{padding: 20}}>
+        <View style={styles.balCard}>
+          <Text style={{color:'#94a3b8', fontSize:12}}>TOTAL WALLET BALANCE</Text>
+          <Text style={styles.bal}>₹{b.toFixed(2)}</Text>
+          <View style={{flexDirection:'row', gap:10}}>
+            <TouchableOpacity style={styles.btnGreen} onPress={() => setMR(true)}><Text style={styles.btnTxt}>⚡ + Recharge</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.btnBlue}><Text style={styles.btnTxt}>↗ Withdraw</Text></TouchableOpacity>
           </View>
         </View>
-      </Modal>
+        <Text style={styles.section}>All Plans</Text>
+        {plans.map(p => (
+          <View key={p.id} style={styles.planCard}>
+            <Text style={styles.badge}>{p.badge}</Text>
+            <Text style={styles.name}>{p.name}</Text>
+            <Text style={styles.daily}>Daily Earning: ₹{p.daily}</Text>
+            <TouchableOpacity style={styles.investBtn} onPress={() => {setB(x => x - p.price); setMyPlans([...myPlans, {...p, lCol: ''}]);}}><Text style={styles.btnTxt}>Invest ₹{p.price}</Text></TouchableOpacity>
+          </View>
+        ))}
+        <Text style={styles.section}>My Active Plans</Text>
+        {myPlans.map(p => (
+          <View key={p.id} style={styles.planCard}>
+            <Text style={styles.name}>{p.name}</Text>
+            <TouchableOpacity onPress={() => handleClaim(p)}><Text style={{color: p.lCol === today ? 'gray' : '#22c55e'}}>{p.lCol === today ? 'Collected' : 'Collect Daily'}</Text></TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
 
-      {/* Admin Panel Modal */}
-      <Modal visible={adminModalVisible} transparent={true}>
-        <View style={{ flex: 1, backgroundColor: '#0009', padding: 20, justifyContent: 'center' }}>
-          {!adminAuth ? (
-             <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10 }}>
-               <TextInput placeholder="Admin PIN (7412)" secureTextEntry onChangeText={setAdminPin} />
-               <TouchableOpacity onPress={() => { if (adminPin === '7412') setAdminAuth(true); }}><Text>Login</Text></TouchableOpacity>
-             </View>
-          ) : (
-             <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10 }}>
-               <Text>Pending Recharges: {depositRequests.length}</Text>
-               <TouchableOpacity onPress={() => setAdminModalVisible(false)}><Text>Close</Text></TouchableOpacity>
-             </View>
-          )}
-        </View>
-      </Modal>
+      {/* Recharge Modal */}
+      <Modal visible={mR} transparent={true}><View style={styles.modal}><View style={styles.modalContent}>
+        <Text style={{fontWeight:'bold'}}>Recharge via UPI</Text>
+        <Image source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=deepsingh7412@ibl&am=500` }} style={{width:150, height:150, alignSelf:'center', margin:15}} />
+        <TouchableOpacity onPress={() => setMR(false)}><Text style={{color:'red', textAlign:'center'}}>Close</Text></TouchableOpacity>
+      </View></View></Modal>
+      
+      {/* Admin Panel */}
+      <Modal visible={mA} transparent={true}><View style={styles.modal}><View style={styles.modalContent}>
+        {!auth ? <><TextInput placeholder="PIN (7412)" secureTextEntry onChangeText={setPin}/><TouchableOpacity onPress={() => {if(pin==='7412') setAuth(true)}}><Text>Login</Text></TouchableOpacity></> : <Text>Admin Access Granted</Text>}
+        <TouchableOpacity onPress={() => {setMA(false); setAuth(false)}}><Text style={{marginTop:10}}>Close</Text></TouchableOpacity>
+      </View></View></Modal>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {flex:1, backgroundColor:'#0a101d'},
+  header: {padding:20, flexDirection:'row', justifyContent:'space-between'},
+  title: {color:'#f59e0b', fontWeight:'bold', fontSize:20},
+  balCard: {backgroundColor:'#1e293b', padding:20, borderRadius:15},
+  bal: {color:'#fff', fontSize:32, fontWeight:'bold', marginVertical:10},
+  btnGreen: {flex:1, backgroundColor:'#16a34a', padding:15, borderRadius:10, alignItems:'center'},
+  btnBlue: {flex:1, backgroundColor:'#0284c7', padding:15, borderRadius:10, alignItems:'center'},
+  btnTxt: {color:'#fff', fontWeight:'bold'},
+  section: {color:'#fff', marginVertical:15, fontWeight:'bold'},
+  planCard: {backgroundColor:'#1e293b', padding:15, borderRadius:15, marginBottom:10},
+  badge: {color:'#f59e0b', fontSize:10},
+  name: {color:'#fff', fontWeight:'bold', marginVertical:5},
+  daily: {color:'#22c55e', marginBottom:10},
+  investBtn: {backgroundColor:'#3b82f6', padding:10, borderRadius:8, alignItems:'center'},
+  modal: {flex:1, backgroundColor:'#0008', justifyContent:'center', padding:20},
+  modalContent: {backgroundColor:'#fff', padding:20, borderRadius:15}
+});
+  
