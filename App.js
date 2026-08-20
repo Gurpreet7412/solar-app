@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+      import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,7 +12,8 @@ import {
   StatusBar,
   Linking,
   Image,
-  ImageBackground
+  ImageBackground,
+  Share
 } from 'react-native';
 
 export default function App() {
@@ -35,22 +36,37 @@ export default function App() {
     { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial Credit' }
   ]);
 
+  // Referral Link
+  const referralLink = 'https://t.me/Guri7412?start=invite30bonus';
+
+  // All Plans: Weekly, 15 Days, and Monthly
   const plans = [
-    { id: 1, badge: '🔥 Hot', duration: '15 Days', daysCount: 15, name: 'Solar Micro 15D', price: 200, daily: 25, category: '15 Days' },
-    { id: 2, badge: '⭐ Popular', duration: '15 Days', daysCount: 15, name: 'Solar Mini 15D', price: 400, daily: 55, category: '15 Days' },
-    { id: 3, badge: '🚀 High Return', duration: '15 Days', daysCount: 15, name: 'Solar Boost 15D', price: 800, daily: 120, category: '15 Days' },
-    { id: 4, badge: '🌱 Stable', duration: '30 Days', daysCount: 30, name: 'Solar Plant 30D', price: 1500, daily: 240, category: '30 Days' },
-    { id: 5, badge: '👑 Mega Yield', duration: '30 Days', daysCount: 30, name: 'Solar Farm Max', price: 3000, daily: 520, category: '30 Days' }
+    { id: 1, badge: '⚡ Fast Return', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
+    { id: 2, badge: '⚡ Quick Gain', duration: '7 Days', daysCount: 7, name: 'Solar Express 7D', price: 300, daily: 65, category: 'Weekly' },
+    { id: 3, badge: '🔥 Hot', duration: '15 Days', daysCount: 15, name: 'Solar Micro 15D', price: 200, daily: 25, category: '15 Days' },
+    { id: 4, badge: '⭐ Popular', duration: '15 Days', daysCount: 15, name: 'Solar Mini 15D', price: 400, daily: 55, category: '15 Days' },
+    { id: 5, badge: '🚀 High Return', duration: '15 Days', daysCount: 15, name: 'Solar Boost 15D', price: 800, daily: 120, category: '15 Days' },
+    { id: 6, badge: '🌱 Stable', duration: '30 Days', daysCount: 30, name: 'Solar Plant 30D', price: 1500, daily: 240, category: '30 Days' },
+    { id: 7, badge: '👑 Mega Yield', duration: '30 Days', daysCount: 30, name: 'Solar Farm Max', price: 3000, daily: 520, category: '30 Days' }
   ];
 
   const filteredPlans = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
 
-  // Telegram Support Handler (@Guri7412 integrated)
   const openTelegramSupport = () => {
     const telegramUrl = 'https://t.me/Guri7412';
     Linking.openURL(telegramUrl).catch(() => {
       Alert.alert('Telegram Support', 'Telegram open nahi ho paya. Direct search karein: @Guri7412');
     });
+  };
+
+  const handleShareLink = async () => {
+    try {
+      await Share.share({
+        message: `🔥 Solar Invest me join karein aur har friend ke recharge par payen flat 30% Direct Bonus! 💰\n\nAbhi join karein: ${referralLink}`
+      });
+    } catch (error) {
+      Alert.alert('Share Error', 'Link share karne me samasya aayi.');
+    }
   };
 
   const handleInvestPress = (plan) => {
@@ -66,7 +82,6 @@ export default function App() {
       return;
     }
 
-    // Deduct Balance & Activate Plan
     setBalance(prev => prev - plan.price);
     const newPlan = {
       id: Date.now().toString(),
@@ -79,7 +94,6 @@ export default function App() {
 
     setMyActivePlans([newPlan, ...myActivePlans]);
 
-    // Add to History
     setHistory([
       { 
         id: Date.now().toString(), 
@@ -102,7 +116,6 @@ export default function App() {
 
     const depositAmount = selectedPlan ? selectedPlan.price : 500;
     
-    // Add to History
     setHistory([
       { 
         id: Date.now().toString(), 
@@ -135,7 +148,6 @@ export default function App() {
 
     setBalance(prev => prev - Number(withdrawAmount));
 
-    // Add to History
     setHistory([
       { 
         id: Date.now().toString(), 
@@ -157,7 +169,6 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
 
-      {/* Background Image Wrapper */}
       <ImageBackground
         source={{ uri: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=1080&auto=format&fit=crop' }}
         style={styles.backgroundImage}
@@ -180,7 +191,7 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* Main Content Area */}
+          {/* Main Content */}
           <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
             
             {bottomNav === 'Invest' && (
@@ -214,7 +225,7 @@ export default function App() {
                   </View>
                 </View>
 
-                {/* Active Running Plans Display */}
+                {/* Running Investments */}
                 {myActivePlans.length > 0 && (
                   <View style={styles.activeSection}>
                     <Text style={styles.sectionHeaderTitle}>⚡ Running Investments ({myActivePlans.length})</Text>
@@ -232,7 +243,7 @@ export default function App() {
 
                 {/* Filter Tabs */}
                 <View style={styles.tabsRow}>
-                  {['All', '15 Days', '30 Days'].map((tab) => (
+                  {['All', 'Weekly', '15 Days', '30 Days'].map((tab) => (
                     <TouchableOpacity
                       key={tab}
                       style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
@@ -245,7 +256,7 @@ export default function App() {
                   ))}
                 </View>
 
-                {/* Investment Plans List */}
+                {/* Plans List */}
                 {filteredPlans.map((plan) => (
                   <View key={plan.id} style={styles.planCard}>
                     <View style={styles.planCardHeader}>
@@ -293,13 +304,28 @@ export default function App() {
               </View>
             )}
 
-            {/* Invite Tab */}
+            {/* Invite Tab (Updated with 30% Bonus & Share Link) */}
             {bottomNav === 'Invite' && (
               <View style={styles.contentBox}>
-                <Text style={styles.sectionHeaderTitle}>Invite & Earn 30%</Text>
-                <Text style={styles.contentSubtitle}>Share your link and earn direct rewards on team investments.</Text>
+                <View style={styles.bonusBanner}>
+                  <Text style={styles.bonusBannerText}>🎉 30% INSTANT BONUS</Text>
+                </View>
+                <Text style={styles.sectionHeaderTitle}>Invite & Earn 30% Bonus</Text>
+                <Text style={styles.contentSubtitle}>
+                  Apne doston ko invite karein aur unke har ek plan investment par payen flat 30% direct bonus reward.
+                </Text>
+
+                <View style={styles.referralLinkBox}>
+                  <Text style={styles.referralLabel}>Aapka Personal Invite Link:</Text>
+                  <Text style={styles.referralLinkText} numberOfLines={1}>{referralLink}</Text>
+                </View>
+
+                <TouchableOpacity style={styles.shareActionBtn} onPress={handleShareLink}>
+                  <Text style={styles.shareBtnText}>🚀 Share Invite Link (Earn 30%)</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.telegramActionBtn} onPress={openTelegramSupport}>
-                  <Text style={styles.btnTextWhite}>✈️ Connect with @Guri7412</Text>
+                  <Text style={styles.btnTextWhite}>✈️ Team Support (@Guri7412)</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -459,18 +485,4 @@ const styles = StyleSheet.create({
   walletTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   walletLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '700' },
   activeTag: { flexDirection: 'row', alignItems: 'center' },
-  greenDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#22c55e', marginRight: 5 },
-  activeTagText: { color: '#22c55e', fontSize: 12, fontWeight: '600' },
-  walletAmount: { fontSize: 36, fontWeight: 'bold', color: '#ffffff', marginVertical: 12 },
-  walletActionsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  rechargeBtn: { flex: 1, backgroundColor: '#16a34a', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
-  withdrawBtn: { flex: 1, backgroundColor: '#2e3d5b', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
-  btnTextWhite: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
-  activeSection: { marginBottom: 16 },
-  runningPlanCard: { backgroundColor: 'rgba(22, 34, 53, 0.95)', borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#22c55e' },
-  runningPlanHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  runningPlanTitle: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
-  runningStatus: { color: '#22c55e', fontSize: 12, fontWeight: 'bold' },
-  runningSub: { color: '#94a3b8', fontSize: 12 },
-  tabsRow: { flexDirection: 'row', backgroundColor: 'rgba(22, 34, 53, 0.85)', borderRadius: 14, padding: 4, marginBottom: 14 },
-  tabItem: { flex: 1, paddingVertical: 8, alignIt
+  gre
