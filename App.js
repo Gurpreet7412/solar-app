@@ -28,18 +28,14 @@ export default function App() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawUpi, setWithdrawUpi] = useState('');
 
-  // Active User Plans State
   const [myActivePlans, setMyActivePlans] = useState([]);
 
-  // Transaction History State
   const [history, setHistory] = useState([
     { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial Credit' }
   ]);
 
-  // Referral Link
   const referralLink = 'https://t.me/Guri7412?start=invite30bonus';
 
-  // All Plans: Weekly, 15 Days, and Monthly
   const plans = [
     { id: 1, badge: '⚡ Fast Return', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
     { id: 2, badge: '⚡ Quick Gain', duration: '7 Days', daysCount: 7, name: 'Solar Express 7D', price: 300, daily: 65, category: 'Weekly' },
@@ -176,7 +172,6 @@ export default function App() {
       >
         <View style={styles.overlayLayer}>
           
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Image source={require('./icon.png')} style={styles.headerLogo} />
@@ -191,12 +186,10 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* Main Content */}
           <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
             
             {bottomNav === 'Invest' && (
               <>
-                {/* Wallet Balance Card */}
                 <View style={styles.walletCard}>
                   <View style={styles.walletTopRow}>
                     <Text style={styles.walletLabel}>TOTAL WALLET BALANCE</Text>
@@ -225,7 +218,6 @@ export default function App() {
                   </View>
                 </View>
 
-                {/* Running Investments */}
                 {myActivePlans.length > 0 && (
                   <View style={styles.activeSection}>
                     <Text style={styles.sectionHeaderTitle}>⚡ Running Investments ({myActivePlans.length})</Text>
@@ -241,7 +233,6 @@ export default function App() {
                   </View>
                 )}
 
-                {/* Category Filter Tabs */}
                 <View style={styles.tabsRow}>
                   {['All', 'Weekly', '15 Days', '30 Days'].map((tab) => (
                     <TouchableOpacity
@@ -256,7 +247,6 @@ export default function App() {
                   ))}
                 </View>
 
-                {/* Plans List */}
                 {filteredPlans.map((plan) => (
                   <View key={plan.id} style={styles.planCard}>
                     <View style={styles.planCardHeader}>
@@ -283,7 +273,6 @@ export default function App() {
               </>
             )}
 
-            {/* History Tab */}
             {bottomNav === 'History' && (
               <View style={styles.contentBox}>
                 <Text style={styles.sectionHeaderTitle}>Transaction & Plan History</Text>
@@ -304,7 +293,6 @@ export default function App() {
               </View>
             )}
 
-            {/* Invite Tab */}
             {bottomNav === 'Invite' && (
               <View style={styles.contentBox}>
                 <View style={styles.bonusBanner}>
@@ -330,7 +318,6 @@ export default function App() {
               </View>
             )}
 
-            {/* Profile Tab */}
             {bottomNav === 'Profile' && (
               <View style={styles.contentBox}>
                 <Text style={styles.sectionHeaderTitle}>User Dashboard</Text>
@@ -344,7 +331,6 @@ export default function App() {
 
           </ScrollView>
 
-          {/* Bottom Navigation */}
           <View style={styles.bottomNav}>
             {[
               { id: 'Invest', label: 'Invest', icon: '⚡' },
@@ -370,7 +356,6 @@ export default function App() {
         </View>
       </ImageBackground>
 
-      {/* Deposit Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -422,7 +407,6 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* Withdraw Modal */}
       <Modal visible={withdrawModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -472,7 +456,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 16,
-    backgroundColor: 'rgba(14, 23, 38, 0.75)',
+    backgroundColor: 'rgba(14, 23, 38, 0.75)'
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
   headerLogo: { width: 36, height: 36, borderRadius: 8, marginRight: 10 },
@@ -485,7 +469,9 @@ const styles = StyleSheet.create({
   walletTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   walletLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '700' },
   activeTag: { flexDirection: 'row', alignItems: 'center' },
-  greenDot: { width: 7, height: 7,
-
-                
-            
+  greenDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#22c55e', marginRight: 5 },
+  activeTagText: { color: '#22c55e', fontSize: 12, fontWeight: '600' },
+  walletAmount: { fontSize: 36, fontWeight: 'bold', color: '#ffffff', marginVertical: 12 },
+  walletActionsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  rechargeBtn: { flex: 1, backgroundColor: '#16a34a', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
+  withdrawBtn: { flex: 1, backgroundColor: '#2e3d5b', borderRadius: 14, paddingVertical: 12, alignItems:
