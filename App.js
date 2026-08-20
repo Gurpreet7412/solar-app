@@ -1,4 +1,4 @@
-      import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -241,7 +241,7 @@ export default function App() {
                   </View>
                 )}
 
-                {/* Filter Tabs */}
+                {/* Category Filter Tabs */}
                 <View style={styles.tabsRow}>
                   {['All', 'Weekly', '15 Days', '30 Days'].map((tab) => (
                     <TouchableOpacity
@@ -304,7 +304,7 @@ export default function App() {
               </View>
             )}
 
-            {/* Invite Tab (Updated with 30% Bonus & Share Link) */}
+            {/* Invite Tab */}
             {bottomNav === 'Invite' && (
               <View style={styles.contentBox}>
                 <View style={styles.bonusBanner}>
@@ -485,4 +485,7 @@ const styles = StyleSheet.create({
   walletTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   walletLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '700' },
   activeTag: { flexDirection: 'row', alignItems: 'center' },
-  gre
+  greenDot: { width: 7, height: 7,
+
+                
+            
