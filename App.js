@@ -18,7 +18,6 @@ export default function App() {
   const [withdrawUpi, setWithdrawUpi] = useState('');
   const [myActivePlans, setMyActivePlans] = useState([]);
   
-  // Owner Request Queues
   const [depositRequests, setDepositRequests] = useState([]);
   const [withdrawRequests, setWithdrawRequests] = useState([]);
   const [history, setHistory] = useState([{ id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }]);
@@ -59,7 +58,6 @@ export default function App() {
     Alert.alert('Success', `${p.name} activate ho gaya!`);
   };
 
-  // 1-Day 1-Time Collection Logic
   const handleClaimIncome = (plan) => {
     if (plan.lastCollected === todayStr) {
       return Alert.alert('Already Collected', 'Aapne aaj ki earning collect kar li hai. Kal dobara collect karein.');
@@ -70,7 +68,6 @@ export default function App() {
     Alert.alert('Success', `₹${plan.daily} wallet me add ho gaye!`);
   };
 
-  // User submits recharge -> goes to Admin
   const handleDepositSubmit = () => {
     if (!transactionId.trim() || transactionId.length < 6) return Alert.alert('Required', 'Valid 12-digit UTR enter karein.');
     const amt = Number(depositAmount) > 0 ? Number(depositAmount) : 500;
@@ -83,7 +80,6 @@ export default function App() {
     setTransactionId('');
   };
 
-  // User submits withdraw -> goes to Admin
   const handleWithdrawSubmit = () => {
     if (!withdrawAmount || Number(withdrawAmount) < 200 || !withdrawUpi.trim() || Number(withdrawAmount) > balance) return Alert.alert('Error', 'Details check karein (Min ₹200).');
     const amt = Number(withdrawAmount);
@@ -97,7 +93,6 @@ export default function App() {
     setWithdrawAmount('');
   };
 
-  // Admin Actions
   const handleApproveDeposit = (req) => {
     setBalance(b => b + req.amount);
     setDepositRequests(depositRequests.filter(d => d.id !== req.id));
@@ -229,7 +224,6 @@ export default function App() {
                 <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 6 }}>Total Balance: ₹{balance.toFixed(2)}</Text>
                 <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 10 }}>Active Plans: {myActivePlans.length}</Text>
                 
-                {/* Admin Button */}
                 <TouchableOpacity style={{ backgroundColor: '#f59e0b', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 }} onPress={() => setAdminModalVisible(true)}>
                   <Text style={{ color: '#000', fontWeight: 'bold' }}>👑 Admin Panel (Pending: {depositRequests.length + withdrawRequests.length})</Text>
                 </TouchableOpacity>
@@ -270,5 +264,8 @@ export default function App() {
               </TouchableOpacity>
             </View>
 
-            {/* Dynamic Auto-Updating QR Image with Selected UPI ID Display */}
-            <View style={{ alignItems: 'center', marginVertical: 6, backgroundColor: '#f8fafc', padding: 8, borderRadius: 10, bor
+            {/* Dynamic QR Display */}
+            <View style={{ alignItems: 'center', marginVertical: 6, backgroundColor: '#f8fafc', padding: 8, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Image 
+                source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${depositAmount || '500'}` }} 
+             
