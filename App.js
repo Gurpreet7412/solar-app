@@ -23,13 +23,13 @@ export default function App() {
 
   const refLink = 'https://solarinvest.in/register?ref=Guri7412';
   const plans = [
-    { id: 1, badge: '⚡ Fast', duration: '7 Days', name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
-    { id: 2, badge: '⚡ Quick', duration: '7 Days', name: 'Solar Express 7D', price: 300, daily: 65, category: 'Weekly' },
-    { id: 3, badge: '🔥 Hot', duration: '15 Days', name: 'Solar Micro 15D', price: 200, daily: 25, category: '15 Days' },
-    { id: 4, badge: '⭐ Popular', duration: '15 Days', name: 'Solar Mini 15D', price: 400, daily: 55, category: '15 Days' },
-    { id: 5, badge: '🚀 Boost', duration: '15 Days', name: 'Solar Boost 15D', price: 800, daily: 120, category: '15 Days' },
-    { id: 6, badge: '🌱 Stable', duration: '30 Days', name: 'Solar Plant 30D', price: 1500, daily: 240, category: '30 Days' },
-    { id: 7, badge: '👑 Mega', duration: '30 Days', name: 'Solar Farm Max', price: 3000, daily: 520, category: '30 Days' }
+    { id: 1, badge: '⚡ Fast', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
+    { id: 2, badge: '⚡ Quick', duration: '7 Days', daysCount: 7, name: 'Solar Express 7D', price: 300, daily: 65, category: 'Weekly' },
+    { id: 3, badge: '🔥 Hot', duration: '15 Days', daysCount: 15, name: 'Solar Micro 15D', price: 200, daily: 25, category: '15 Days' },
+    { id: 4, badge: '⭐ Popular', duration: '15 Days', daysCount: 15, name: 'Solar Mini 15D', price: 400, daily: 55, category: '15 Days' },
+    { id: 5, badge: '🚀 Boost', duration: '15 Days', daysCount: 15, name: 'Solar Boost 15D', price: 800, daily: 120, category: '15 Days' },
+    { id: 6, badge: '🌱 Stable', duration: '30 Days', daysCount: 30, name: 'Solar Plant 30D', price: 1500, daily: 240, category: '30 Days' },
+    { id: 7, badge: '👑 Mega', duration: '30 Days', daysCount: 30, name: 'Solar Farm Max', price: 3000, daily: 520, category: '30 Days' }
   ];
 
   const filtered = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
@@ -38,12 +38,18 @@ export default function App() {
 
   const openUpi = (app) => {
     const amt = Number(depositAmount) > 0 ? depositAmount : '500';
-    const u = app === 'phonepe' ? `phonepe://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR` : (app === 'paytm' ? `paytmmp://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR` : `upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR`);
-    Linking.openURL(u).catch(() => Alert.alert('UPI Error', 'App open nahi hui.'));
+    const generic = `upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR`;
+    const url = app === 'phonepe' ? `phonepe://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR` : (app === 'paytm' ? `paytmmp://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR` : generic);
+    Linking.openURL(url).catch(() => Linking.openURL(generic).catch(() => Alert.alert('UPI Error', 'UPI app open nahi ho pa rahi.')));
   };
 
   const handleInvest = (p) => {
-    if (balance < p.price) return Alert.alert('Low Balance', `₹${p.price} recharge karein.`, [{ text: 'Cancel' }, { text: 'Recharge', onPress: () => { setDepositAmount(p.price.toString()); setModalVisible(true); } }]);
+    if (balance < p.price) {
+      return Alert.alert('Low Balance', `₹${p.price} recharge karein.`, [
+        { text: 'Cancel' },
+        { text: 'Recharge', onPress: () => { setDepositAmount(p.price.toString()); setModalVisible(true); } }
+      ]);
+    }
     setBalance(b => b - p.price);
     setMyActivePlans([{ id: Date.now().toString(), name: p.name, price: p.price, daily: p.daily, lastCollected: '' }, ...myActivePlans]);
     setHistory([{ id: Date.now().toString(), type: `Invest: ${p.name}`, amount: `-₹${p.price}`, status: 'Running', date: 'Today' }, ...history]);
@@ -51,7 +57,9 @@ export default function App() {
   };
 
   const handleClaim = (plan) => {
-    if (plan.lastCollected === todayStr) return Alert.alert('Already Collected', 'Aaj ki income pehle hi collect kar li hai. Kal dobara claim karein.');
+    if (plan.lastCollected === todayStr) {
+      return Alert.alert('Already Collected', 'Aapne aaj ki income collect kar li hai. Kal dobara collect karein.');
+    }
     setBalance(b => b + plan.daily);
     setMyActivePlans(myActivePlans.map(p => p.id === plan.id ? { ...p, lastCollected: todayStr } : p));
     setHistory([{ id: Date.now().toString(), type: `Income: ${plan.name}`, amount: `+₹${plan.daily}`, status: 'Credited', date: 'Today' }, ...history]);
@@ -59,12 +67,12 @@ export default function App() {
   };
 
   const handleDepositSubmit = () => {
-    if (!transactionId.trim() || transactionId.length < 6) return Alert.alert('Required', 'Valid UTR enter karein.');
+    if (!transactionId.trim() || transactionId.length < 6) return Alert.alert('Required', 'Valid 12-digit UTR enter karein.');
     const amt = Number(depositAmount) > 0 ? Number(depositAmount) : 500;
-    const req = { id: Date.now().toString(), amount: amt, utr: transactionId };
+    const req = { id: Date.now().toString(), amount: amt, utr: transactionId, upi: selectedUpi };
     setDepositRequests([req, ...depositRequests]);
     setHistory([{ id: req.id, type: 'Recharge Request', amount: `+₹${amt}`, status: 'Pending Approval', date: 'Today' }, ...history]);
-    Alert.alert('Submitted', 'Verification ke baad balance add hoga.');
+    Alert.alert('Request Sent', 'Recharge request submit ho gayi hai. Admin approve hone ke baad balance add hoga.');
     setModalVisible(false);
     setTransactionId('');
   };
@@ -76,7 +84,7 @@ export default function App() {
     const req = { id: Date.now().toString(), amount: amt, upi: withdrawUpi };
     setWithdrawRequests([req, ...withdrawRequests]);
     setHistory([{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Review', date: 'Today' }, ...history]);
-    Alert.alert('Submitted', `₹${amt} withdrawal review me hai.`);
+    Alert.alert('Request Sent', `₹${amt} withdrawal review me chali gayi hai.`);
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
   };
@@ -84,14 +92,14 @@ export default function App() {
   const handleApproveDeposit = (r) => {
     setBalance(b => b + r.amount);
     setDepositRequests(depositRequests.filter(d => d.id !== r.id));
-    setHistory(history.map(h => h.id === r.id ? { ...h, status: 'Success' } : h));
-    Alert.alert('Approved', `₹${r.amount} added!`);
+    setHistory(history.map(h => h.id === r.id ? { ...h, status: 'Success (Approved)' } : h));
+    Alert.alert('Approved', `₹${r.amount} recharge balance add ho gaya!`);
   };
 
   const handleApproveWithdraw = (r) => {
     setWithdrawRequests(withdrawRequests.filter(w => w.id !== r.id));
-    setHistory(history.map(h => h.id === r.id ? { ...h, status: 'Paid' } : h));
-    Alert.alert('Approved', `₹${r.amount} paid!`);
+    setHistory(history.map(h => h.id === r.id ? { ...h, status: 'Paid (Completed)' } : h));
+    Alert.alert('Approved', `₹${r.amount} withdrawal complete marked!`);
   };
 
   return (
@@ -163,9 +171,12 @@ export default function App() {
               <View style={{ backgroundColor: 'rgba(27, 38, 59, 0.92)', borderRadius: 14, padding: 14 }}>
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginBottom: 6 }}>Transaction History</Text>
                 {history.map((h) => (
-                  <View key={h.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' }}>
+                  <View key={h.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' }}>
                     <View><Text style={{ color: '#fff', fontSize: 13 }}>{h.type}</Text><Text style={{ color: '#64748b', fontSize: 10 }}>{h.date}</Text></View>
-                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: h.amount.includes('+') ? '#22c55e' : '#fff' }}>{h.amount}</Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: h.amount.includes('+') ? '#22c55e' : '#fff' }}>{h.amount}</Text>
+                      <Text style={{ color: h.status.includes('Pending') || h.status.includes('Review') ? '#f59e0b' : '#94a3b8', fontSize: 10 }}>{h.status}</Text>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -205,30 +216,37 @@ export default function App() {
         </View>
       </ImageBackground>
 
+      {/* Recharge Modal with Live Dynamic QR Code & Fast UPI */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 18, width: '100%', maxWidth: 360 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>Recharge & Payment</Text>
-            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Amount" value={depositAmount} onChangeText={setDepositAmount} keyboardType="number-pad" />
-            <TouchableOpacity style={{ borderWidth: 1, borderColor: selectedUpi === 'deepsingh7412@ibl' ? '#16a34a' : '#cbd5e1', borderRadius: 8, padding: 8, marginBottom: 4 }} onPress={() => setSelectedUpi('deepsingh7412@ibl')}><Text style={{ fontWeight: 'bold' }}>1. deepsingh7412@ibl</Text></TouchableOpacity>
-            <TouchableOpacity style={{ borderWidth: 1, borderColor: selectedUpi === 'mandeep7412@axl' ? '#16a34a' : '#cbd5e1', borderRadius: 8, padding: 8, marginBottom: 6 }} onPress={() => setSelectedUpi('mandeep7412@axl')}><Text style={{ fontWeight: 'bold' }}>2. mandeep7412@axl</Text></TouchableOpacity>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
-              <TouchableOpacity style={{ flex: 1, backgroundColor: '#5f259f', padding: 8, borderRadius: 8, alignItems: 'center' }} onPress={() => openUpi('phonepe')}><Text style={{ color: '#fff', fontWeight: 'bold' }}>🟣 PhonePe</Text></TouchableOpacity>
-              <TouchableOpacity style={{ flex: 1, backgroundColor: '#00baf2', padding: 8, borderRadius: 8, alignItems: 'center' }} onPress={() => openUpi('paytm')}><Text style={{ color: '#fff', fontWeight: 'bold' }}>🔵 Paytm</Text></TouchableOpacity>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 16, width: '100%', maxWidth: 360 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>Recharge & Scan QR</Text>
+            
+            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Amount (₹)" value={depositAmount} onChangeText={setDepositAmount} keyboardType="number-pad" />
+            
+            <View style={{ flexDirection: 'row', gap: 6, marginVertical: 4 }}>
+              <TouchableOpacity style={{ flex: 1, borderWidth: 1, borderColor: selectedUpi === 'deepsingh7412@ibl' ? '#16a34a' : '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: selectedUpi === 'deepsingh7412@ibl' ? '#f0fdf4' : '#fff' }} onPress={() => setSelectedUpi('deepsingh7412@ibl')}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a' }}>deepsingh7412@ibl</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ flex: 1, borderWidth: 1, borderColor: selectedUpi === 'mandeep7412@axl' ? '#16a34a' : '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: selectedUpi === 'mandeep7412@axl' ? '#f0fdf4' : '#fff' }} onPress={() => setSelectedUpi('mandeep7412@axl')}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a' }}>mandeep7412@axl</Text>
+              </TouchableOpacity>
             </View>
-            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="12-digit UTR No." value={transactionId} onChangeText={setTransactionId} keyboardType="number-pad" />
-            <TouchableOpacity style={{ backgroundColor: '#16a34a', borderRadius: 8, padding: 11, alignItems: 'center', marginTop: 6 }} onPress={handleDepositSubmit}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit Recharge Request</Text></TouchableOpacity>
-            <TouchableOpacity style={{ alignItems: 'center', marginTop: 8 }} onPress={() => setModalVisible(false)}><Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Cancel</Text></TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
-      <Modal visible={withdrawModalVisible} transparent={true} animationType="fade">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 18, width: '100%', maxWidth: 360 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>Withdraw Balance</Text>
-            <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 6 }}>Available: ₹{balance.toFixed(2)}</Text>
-            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Amount (Min ₹200)" value={withdrawAmount} onChangeText={setWithdrawAmount} keyboardType="number-pad" />
-            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Your UPI ID" value={withdrawUpi} onChangeText={setWithdrawUpi} />
-            <TouchableOpacity style={{ backgroundColor: '#16a34a', borderRadius: 8, padding: 11, alignItems: 'center', marginTop: 6 }} onPress={handleWithdrawSubmit}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit Withdrawal Request</Text></TouchableOpacity>
-            <TouchableOpacity style={{ alignItems: 'center', marginTop: 8
+            {/* Dynamic Auto-Updating QR Image */}
+            <View style={{ alignItems: 'center', marginVertical: 6, backgroundColor: '#f8fafc', padding: 8, borderRadius: 10 }}>
+              <Image 
+                source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${depositAmount || '500'}` }} 
+                style={{ width: 140, height: 140, borderRadius: 6 }} 
+              />
+              <Text style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>Scan & Pay ₹{depositAmount || '500'}</Text>
+            </View>
+
+            {/* Fast 1-Click Pay */}
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+              <TouchableOpacity style={{ flex: 1, backgroundColor: '#5f259f', padding: 8, borderRadius: 8, alignItems: 'center' }} onPress={() => openUpi('phonepe')}><Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11 }}>🟣 PhonePe</Text></TouchableOpacity>
+              <TouchableOpacity style={{ flex: 1, backgroundColor: '#00baf2', padding: 8, borderRadius: 8, alignItems: 'center' }} onPress={() => openUpi('paytm')}><Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11 }}>🔵 Paytm</Text></TouchableOpacity>
+            </View>
+
+            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Enter 12-digit UTR No." value={transactionId} onChangeText={setTransactionId} keyboardType="number-pad" />
+            <TouchableOpacity style={{ backgroundColor: '#16a34a', borderRadius:
