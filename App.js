@@ -29,7 +29,6 @@ export default function App() {
   const [withdrawUpi, setWithdrawUpi] = useState('');
 
   const [myActivePlans, setMyActivePlans] = useState([]);
-
   const [history, setHistory] = useState([
     { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial Credit' }
   ]);
@@ -49,9 +48,8 @@ export default function App() {
   const filteredPlans = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
 
   const openTelegramSupport = () => {
-    const telegramUrl = 'https://t.me/Guri7412';
-    Linking.openURL(telegramUrl).catch(() => {
-      Alert.alert('Telegram Support', 'Telegram open nahi ho paya. Direct search karein: @Guri7412');
+    Linking.openURL('https://t.me/Guri7412').catch(() => {
+      Alert.alert('Telegram Support', 'Direct search karein: @Guri7412');
     });
   };
 
@@ -60,21 +58,17 @@ export default function App() {
       await Share.share({
         message: `🔥 Solar Invest me join karein aur har friend ke recharge par payen flat 30% Direct Bonus! 💰\n\nAbhi join karein: ${referralLink}`
       });
-    } catch (error) {
-      Alert.alert('Share Error', 'Link share karne me samasya aayi.');
+    } catch (e) {
+      Alert.alert('Share Error', 'Link share nahi ho paya.');
     }
   };
 
   const handleInvestPress = (plan) => {
     if (balance < plan.price) {
-      Alert.alert(
-        'Low Balance', 
-        `Aapke paas paryapt balance nahi hai. Kripya pehle ₹${plan.price} recharge karein.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Recharge Now', onPress: () => { setSelectedPlan(plan); setModalVisible(true); } }
-        ]
-      );
+      Alert.alert('Low Balance', `₹${plan.price} recharge karein.`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Recharge Now', onPress: () => { setSelectedPlan(plan); setModalVisible(true); } }
+      ]);
       return;
     }
 
@@ -89,73 +83,48 @@ export default function App() {
     };
 
     setMyActivePlans([newPlan, ...myActivePlans]);
-
     setHistory([
-      { 
-        id: Date.now().toString(), 
-        type: `Invested: ${plan.name}`, 
-        amount: `-₹${plan.price}`, 
-        status: 'Active (Running)', 
-        date: new Date().toLocaleDateString('en-GB') 
-      },
+      { id: Date.now().toString(), type: `Invested: ${plan.name}`, amount: `-₹${plan.price}`, status: 'Active (Running)', date: new Date().toLocaleDateString('en-GB') },
       ...history
     ]);
-
-    Alert.alert('Success', `${plan.name} successfully activate ho gaya hai! Earning running status me add ho chuki hai.`);
+    Alert.alert('Success', `${plan.name} activate ho gaya hai!`);
   };
 
   const handleDepositSubmit = () => {
     if (!transactionId.trim()) {
-      Alert.alert('Required', 'Kripya apna 12-digit UTR / Ref No. enter karein.');
+      Alert.alert('Required', '12-digit UTR enter karein.');
       return;
     }
-
     const depositAmount = selectedPlan ? selectedPlan.price : 500;
-    
     setHistory([
-      { 
-        id: Date.now().toString(), 
-        type: 'Recharge / Deposit', 
-        amount: `+₹${depositAmount}`, 
-        status: 'Pending Verification', 
-        date: new Date().toLocaleDateString('en-GB') 
-      },
+      { id: Date.now().toString(), type: 'Recharge / Deposit', amount: `+₹${depositAmount}`, status: 'Pending Verification', date: new Date().toLocaleDateString('en-GB') },
       ...history
     ]);
-
-    Alert.alert('Payment Submitted', `UTR ${transactionId} submit ho gaya hai. Verification ke baad balance me add ho jayega.`);
+    Alert.alert('Submitted', `UTR ${transactionId} verification ke liye submit ho gaya.`);
     setModalVisible(false);
     setTransactionId('');
   };
 
   const handleWithdrawSubmit = () => {
     if (!withdrawAmount || Number(withdrawAmount) < 200) {
-      Alert.alert('Invalid Amount', 'Minimum withdrawal limit ₹200 hai.');
+      Alert.alert('Invalid', 'Min withdrawal ₹200 hai.');
       return;
     }
     if (!withdrawUpi.trim()) {
-      Alert.alert('Required', 'Apna UPI ID enter karein.');
+      Alert.alert('Required', 'UPI ID enter karein.');
       return;
     }
     if (Number(withdrawAmount) > balance) {
-      Alert.alert('Insufficient Balance', 'Aapke wallet me itna balance nahi hai.');
+      Alert.alert('Error', 'Wallet balance kam hai.');
       return;
     }
 
     setBalance(prev => prev - Number(withdrawAmount));
-
     setHistory([
-      { 
-        id: Date.now().toString(), 
-        type: `Withdrawal (${withdrawUpi})`, 
-        amount: `-₹${withdrawAmount}`, 
-        status: 'Processing', 
-        date: new Date().toLocaleDateString('en-GB') 
-      },
+      { id: Date.now().toString(), type: `Withdraw (${withdrawUpi})`, amount: `-₹${withdrawAmount}`, status: 'Processing', date: new Date().toLocaleDateString('en-GB') },
       ...history
     ]);
-
-    Alert.alert('Success', `₹${withdrawAmount} withdrawal request submit ho gayi hai.`);
+    Alert.alert('Success', `₹${withdrawAmount} withdrawal request submit ho gayi.`);
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
     setWithdrawUpi('');
@@ -300,7 +269,7 @@ export default function App() {
                 </View>
                 <Text style={styles.sectionHeaderTitle}>Invite & Earn 30% Bonus</Text>
                 <Text style={styles.contentSubtitle}>
-                  Apne doston ko invite karein aur unke har ek plan investment par payen flat 30% direct bonus reward.
+                  Apne doston ko invite karein aur unke har investment par payen 30% direct bonus.
                 </Text>
 
                 <View style={styles.referralLinkBox}>
@@ -474,4 +443,11 @@ const styles = StyleSheet.create({
   walletAmount: { fontSize: 36, fontWeight: 'bold', color: '#ffffff', marginVertical: 12 },
   walletActionsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   rechargeBtn: { flex: 1, backgroundColor: '#16a34a', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
-  withdrawBtn: { flex: 1, backgroundColor: '#2e3d5b', borderRadius: 14, paddingVertical: 12, alignItems:
+  withdrawBtn: { flex: 1, backgroundColor: '#2e3d5b', borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
+  btnTextWhite: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
+  activeSection: { marginBottom: 16 },
+  runningPlanCard: { backgroundColor: 'rgba(22, 34, 53, 0.95)', borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#22c55e' },
+  runningPlanHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  runningPlanTitle: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
+  runningStatus: { color: '#22c55e', fontSize: 12, fontWeight: 'bold' },
+  runn
