@@ -42,7 +42,7 @@ export default function App() {
     const amt = Number(depositAmount) > 0 ? depositAmount : '500';
     const generic = `upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR`;
     const u = app === 'phonepe' ? `phonepe://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR` : (app === 'paytm' ? `paytmmp://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR` : generic);
-    Linking.openURL(u).catch(() => Linking.openURL(generic).catch(() => Alert.alert('UPI Error', 'UPI app open nahi hui. Manual payment karein.')));
+    Linking.openURL(u).catch(() => Linking.openURL(generic).catch(() => Alert.alert('UPI', 'Manual payment karein.')));
   };
 
   const handleInvest = (p) => {
@@ -60,7 +60,7 @@ export default function App() {
 
   const handleClaimIncome = (plan) => {
     if (plan.lastCollected === todayStr) {
-      return Alert.alert('Already Collected', 'Aapne aaj ki earning collect kar li hai. Kal dobara collect karein.');
+      return Alert.alert('Already Collected', 'Aaj ki earning collect kar li hai. Kal claim karein.');
     }
     setBalance(b => b + plan.daily);
     setMyActivePlans(myActivePlans.map(p => p.id === plan.id ? { ...p, lastCollected: todayStr } : p));
@@ -72,10 +72,9 @@ export default function App() {
     if (!transactionId.trim() || transactionId.length < 6) return Alert.alert('Required', 'Valid 12-digit UTR enter karein.');
     const amt = Number(depositAmount) > 0 ? Number(depositAmount) : 500;
     const req = { id: Date.now().toString(), amount: amt, utr: transactionId, upi: selectedUpi, date: 'Today' };
-    
     setDepositRequests([req, ...depositRequests]);
     setHistory([{ id: req.id, type: 'Recharge Request', amount: `+₹${amt}`, status: 'Pending Approval', date: 'Today' }, ...history]);
-    Alert.alert('Request Sent', 'Recharge request submit ho gayi hai. Admin verify karke balance add karega.');
+    Alert.alert('Request Sent', 'Recharge verify hone ke baad balance add hoga.');
     setModalVisible(false);
     setTransactionId('');
   };
@@ -85,38 +84,11 @@ export default function App() {
     const amt = Number(withdrawAmount);
     setBalance(b => b - amt);
     const req = { id: Date.now().toString(), amount: amt, upi: withdrawUpi, date: 'Today' };
-    
     setWithdrawRequests([req, ...withdrawRequests]);
-    setHistory([{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Admin Review', date: 'Today' }, ...history]);
-    Alert.alert('Request Sent', `₹${amt} withdrawal request submit ho gayi hai.`);
+    setHistory([{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Review', date: 'Today' }, ...history]);
+    Alert.alert('Request Sent', `₹${amt} withdrawal submit ho gaya.`);
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
-  };
-
-  const handleApproveDeposit = (req) => {
-    setBalance(b => b + req.amount);
-    setDepositRequests(depositRequests.filter(d => d.id !== req.id));
-    setHistory(history.map(h => h.id === req.id ? { ...h, status: 'Success (Approved)' } : h));
-    Alert.alert('Approved', `₹${req.amount} recharge balance add kar diya gaya!`);
-  };
-
-  const handleRejectDeposit = (req) => {
-    setDepositRequests(depositRequests.filter(d => d.id !== req.id));
-    setHistory(history.map(h => h.id === req.id ? { ...h, status: 'Rejected' } : h));
-    Alert.alert('Rejected', 'Recharge request reject ho gayi.');
-  };
-
-  const handleApproveWithdraw = (req) => {
-    setWithdrawRequests(withdrawRequests.filter(w => w.id !== req.id));
-    setHistory(history.map(h => h.id === req.id ? { ...h, status: 'Completed (Paid)' } : h));
-    Alert.alert('Approved', `₹${req.amount} withdrawal complete marked!`);
-  };
-
-  const handleRejectWithdraw = (req) => {
-    setBalance(b => b + req.amount);
-    setWithdrawRequests(withdrawRequests.filter(w => w.id !== req.id));
-    setHistory(history.map(h => h.id === req.id ? { ...h, status: 'Rejected (Refunded)' } : h));
-    Alert.alert('Rejected', 'Withdrawal reject kar diya gaya aur balance refund ho gaya.');
   };
 
   return (
@@ -153,17 +125,9 @@ export default function App() {
                       const isCollected = ap.lastCollected === todayStr;
                       return (
                         <View key={ap.id} style={{ backgroundColor: 'rgba(22, 34, 53, 0.95)', borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: isCollected ? '#334155' : '#22c55e', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <View>
-                            <Text style={{ color: '#fff', fontWeight: 'bold' }}>{ap.name}</Text>
-                            <Text style={{ color: '#94a3b8', fontSize: 11 }}>Daily: <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>+₹{ap.daily}</Text></Text>
-                          </View>
-                          <TouchableOpacity 
-                            style={{ backgroundColor: isCollected ? '#334155' : '#16a34a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }} 
-                            onPress={() => handleClaimIncome(ap)}
-                          >
-                            <Text style={{ color: isCollected ? '#94a3b8' : '#fff', fontSize: 11, fontWeight: 'bold' }}>
-                              {isCollected ? '✅ Done' : '💰 Collect'}
-                            </Text>
+                          <View><Text style={{ color: '#fff', fontWeight: 'bold' }}>{ap.name}</Text><Text style={{ color: '#94a3b8', fontSize: 11 }}>Daily: <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>+₹{ap.daily}</Text></Text></View>
+                          <TouchableOpacity style={{ backgroundColor: isCollected ? '#334155' : '#16a34a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }} onPress={() => handleClaimIncome(ap)}>
+                            <Text style={{ color: isCollected ? '#94a3b8' : '#fff', fontSize: 11, fontWeight: 'bold' }}>{isCollected ? '✅ Done' : '💰 Collect'}</Text>
                           </TouchableOpacity>
                         </View>
                       );
@@ -197,10 +161,7 @@ export default function App() {
                 {history.map((h) => (
                   <View key={h.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' }}>
                     <View><Text style={{ color: '#fff', fontSize: 13 }}>{h.type}</Text><Text style={{ color: '#64748b', fontSize: 10 }}>{h.date}</Text></View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 13, fontWeight: 'bold', color: h.amount.includes('+') ? '#22c55e' : '#fff' }}>{h.amount}</Text>
-                      <Text style={{ color: h.status.includes('Pending') || h.status.includes('Review') ? '#f59e0b' : '#94a3b8', fontSize: 10 }}>{h.status}</Text>
-                    </View>
+                    <View style={{ alignItems: 'flex-end' }}><Text style={{ fontSize: 13, fontWeight: 'bold', color: h.amount.includes('+') ? '#22c55e' : '#fff' }}>{h.amount}</Text><Text style={{ color: '#94a3b8', fontSize: 10 }}>{h.status}</Text></View>
                   </View>
                 ))}
               </View>
@@ -212,9 +173,7 @@ export default function App() {
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginVertical: 6 }}>Invite & Earn 30% Bonus</Text>
                 <Text style={{ color: '#22c55e', fontWeight: 'bold', fontSize: 12, marginBottom: 10 }}>{refLink}</Text>
                 <TouchableOpacity style={{ backgroundColor: '#16a34a', padding: 10, borderRadius: 10, alignItems: 'center', marginBottom: 8 }} onPress={() => Share.share({ message: `Join Solar Invest: ${refLink}` })}><Text style={{ color: '#fff', fontWeight: 'bold' }}>🚀 Share Invite Link</Text></TouchableOpacity>
-                <TouchableOpacity style={{ backgroundColor: '#0284c7', padding: 10, borderRadius: 10, alignItems: 'center' }} onPress={openSupport}>
-                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>✈️ Support (@Guri7412)</Text>
-                </TouchableOpacity>
+                <TouchableOpacity style={{ backgroundColor: '#0284c7', padding: 10, borderRadius: 10, alignItems: 'center' }} onPress={openSupport}><Text style={{ color: '#fff', fontWeight: 'bold' }}>✈️ Support (@Guri7412)</Text></TouchableOpacity>
               </View>
             )}
 
@@ -223,14 +182,10 @@ export default function App() {
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginBottom: 8 }}>User Dashboard</Text>
                 <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 6 }}>Total Balance: ₹{balance.toFixed(2)}</Text>
                 <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 10 }}>Active Plans: {myActivePlans.length}</Text>
-                
                 <TouchableOpacity style={{ backgroundColor: '#f59e0b', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 }} onPress={() => setAdminModalVisible(true)}>
                   <Text style={{ color: '#000', fontWeight: 'bold' }}>👑 Admin Panel (Pending: {depositRequests.length + withdrawRequests.length})</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={{ backgroundColor: '#0284c7', padding: 10, borderRadius: 10, alignItems: 'center' }} onPress={openSupport}>
-                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>✈️ 24/7 Support (@Guri7412)</Text>
-                </TouchableOpacity>
+                <TouchableOpacity style={{ backgroundColor: '#0284c7', padding: 10, borderRadius: 10, alignItems: 'center' }} onPress={openSupport}><Text style={{ color: '#fff', fontWeight: 'bold' }}>✈️ 24/7 Support (@Guri7412)</Text></TouchableOpacity>
               </View>
             )}
           </ScrollView>
@@ -246,26 +201,34 @@ export default function App() {
         </View>
       </ImageBackground>
 
-      {/* Recharge Modal with Both UPI IDs & Live QR */}
+      {/* Recharge Modal with Live QR */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 16, width: '100%', maxWidth: 360 }}>
             <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>Recharge & Scan QR</Text>
-            
             <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Amount (₹)" value={depositAmount} onChangeText={setDepositAmount} keyboardType="number-pad" />
-            
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: '600' }}>Select UPI ID:</Text>
             <View style={{ flexDirection: 'row', gap: 6, marginVertical: 4 }}>
-              <TouchableOpacity style={{ flex: 1, borderWidth: 1, borderColor: selectedUpi === 'deepsingh7412@ibl' ? '#16a34a' : '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: selectedUpi === 'deepsingh7412@ibl' ? '#f0fdf4' : '#fff' }} onPress={() => setSelectedUpi('deepsingh7412@ibl')}>
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a' }}>1. deepsingh7412@ibl</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={{ flex: 1, borderWidth: 1, borderColor: selectedUpi === 'mandeep7412@axl' ? '#16a34a' : '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: selectedUpi === 'mandeep7412@axl' ? '#f0fdf4' : '#fff' }} onPress={() => setSelectedUpi('mandeep7412@axl')}>
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#0f172a' }}>2. mandeep7412@axl</Text>
-              </TouchableOpacity>
+              <TouchableOpacity style={{ flex: 1, borderWidth: 1, borderColor: selectedUpi === 'deepsingh7412@ibl' ? '#16a34a' : '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: selectedUpi === 'deepsingh7412@ibl' ? '#f0fdf4' : '#fff' }} onPress={() => setSelectedUpi('deepsingh7412@ibl')}><Text style={{ fontSize: 11, fontWeight: 'bold' }}>1. deepsingh7412@ibl</Text></TouchableOpacity>
+              <TouchableOpacity style={{ flex: 1, borderWidth: 1, borderColor: selectedUpi === 'mandeep7412@axl' ? '#16a34a' : '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: selectedUpi === 'mandeep7412@axl' ? '#f0fdf4' : '#fff' }} onPress={() => setSelectedUpi('mandeep7412@axl')}><Text style={{ fontSize: 11, fontWeight: 'bold' }}>2. mandeep7412@axl</Text></TouchableOpacity>
             </View>
-
-            {/* Dynamic QR Display */}
             <View style={{ alignItems: 'center', marginVertical: 6, backgroundColor: '#f8fafc', padding: 8, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
-              <Image 
-                source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${depositAmount || '500'}` }} 
-             
+              <Image source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=${selectedUpi}%26pn=SolarInvest%26am=${depositAmount || '500'}` }} style={{ width: 140, height: 140, borderRadius: 6 }} />
+              <Text style={{ fontSize: 11, color: '#0f172a', marginTop: 4, fontWeight: 'bold' }}>UPI: {selectedUpi}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+              <TouchableOpacity style={{ flex: 1, backgroundColor: '#5f259f', padding: 8, borderRadius: 8, alignItems: 'center' }} onPress={() => openUpi('phonepe')}><Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11 }}>🟣 PhonePe</Text></TouchableOpacity>
+              <TouchableOpacity style={{ flex: 1, backgroundColor: '#00baf2', padding: 8, borderRadius: 8, alignItems: 'center' }} onPress={() => openUpi('paytm')}><Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11 }}>🔵 Paytm</Text></TouchableOpacity>
+            </View>
+            <TextInput style={{ borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 }} placeholder="Enter 12-digit UTR No." value={transactionId} onChangeText={setTransactionId} keyboardType="number-pad" />
+            <TouchableOpacity style={{ backgroundColor: '#16a34a', borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 4 }} onPress={handleDepositSubmit}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit Recharge Request</Text></TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: 'center', marginTop: 6 }} onPress={() => setModalVisible(false)}><Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Cancel</Text></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Withdraw Modal */}
+      <Modal visible={withdrawModalVisible} transparent={true} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 18, width: '100%', maxWidth: 360 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>Withdraw Balance</Text>
+            <Text style={{ color: '#64748b', fon
