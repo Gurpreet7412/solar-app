@@ -1,21 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Modal,
-  Alert,
-  SafeAreaView,
-  StatusBar,
-  Linking,
-  Image,
-  ImageBackground,
-  Share,
-  Platform
-} from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Image, ImageBackground, Share, Platform } from 'react-native';
 
 export default function App() {
   const [balance, setBalance] = useState(1100.0);
@@ -29,11 +13,10 @@ export default function App() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawUpi, setWithdrawUpi] = useState('');
   const [myActivePlans, setMyActivePlans] = useState([]);
-  const [history, setHistory] = useState([
-    { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
-  ]);
+  const [history, setHistory] = useState([{ id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }]);
 
-  const referralLink = 'https://t.me/Guri7412?start=invite30bonus';
+  // Website Referral Link
+  const referralLink = 'https://solarinvest.in/register?ref=Guri7412';
 
   const plans = [
     { id: 1, badge: '⚡ Fast', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
@@ -46,21 +29,17 @@ export default function App() {
   ];
 
   const filteredPlans = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
-
   const openTelegram = () => Linking.openURL('https://t.me/Guri7412').catch(() => Alert.alert('Support', '@Guri7412'));
 
   const handleShare = async () => {
     try {
-      await Share.share({ message: `🔥 Solar Invest me join karein aur 30% Bonus payen!\n${referralLink}` });
+      await Share.share({ message: `🔥 Solar Invest website par join karein aur 30% Bonus payen!\nRegistration Link: ${referralLink}` });
     } catch (e) { Alert.alert('Error', 'Share failed'); }
   };
 
   const handleInvest = (plan) => {
     if (balance < plan.price) {
-      Alert.alert('Low Balance', `₹${plan.price} recharge karein.`, [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Recharge', onPress: () => { setSelectedPlan(plan); setModalVisible(true); } }
-      ]);
+      Alert.alert('Low Balance', `₹${plan.price} recharge karein.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Recharge', onPress: () => { setSelectedPlan(plan); setModalVisible(true); } }]);
       return;
     }
     setBalance(prev => prev - plan.price);
@@ -96,7 +75,6 @@ export default function App() {
       <ImageBackground source={{ uri: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?q=80&w=1080&auto=format&fit=crop' }} style={s.bg} resizeMode="cover">
         <View style={s.overlay}>
           
-          {/* Header */}
           <View style={s.header}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image source={require('./icon.png')} style={{ width: 34, height: 34, borderRadius: 8, marginRight: 8 }} />
@@ -110,7 +88,6 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* Main Body */}
           <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
             {bottomNav === 'Invest' && (
               <>
@@ -190,15 +167,15 @@ export default function App() {
 
             {bottomNav === 'Invite' && (
               <View style={s.card}>
-                <View style={s.badge}><Text style={{ color: '#f59e0b', fontSize: 11, fontWeight: 'bold' }}>🎉 30% INSTANT BONUS</Text></View>
-                <Text style={[s.secTitle, { marginTop: 8 }]}>Invite & Earn 30% Bonus</Text>
-                <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 10 }}>Share karein aur har member ke recharge par flat 30% direct bonus payen.</Text>
+                <View style={s.badge}><Text style={{ color: '#f59e0b', fontSize: 11, fontWeight: 'bold' }}>🎉 30% BONUS</Text></View>
+                <Text style={[s.secTitle, { marginTop: 8 }]}>Invite & Earn 30%</Text>
+                <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 10 }}>Solar Invest website link share karein aur flat 30% direct bonus payen.</Text>
                 <View style={s.linkBox}>
-                  <Text style={{ color: '#94a3b8', fontSize: 10 }}>Your Invite Link:</Text>
+                  <Text style={{ color: '#94a3b8', fontSize: 10 }}>Official Website Invite Link:</Text>
                   <Text style={{ color: '#22c55e', fontWeight: 'bold', fontSize: 12 }} numberOfLines={1}>{referralLink}</Text>
                 </View>
                 <TouchableOpacity style={[s.btn, { backgroundColor: '#16a34a', marginVertical: 6, width: '100%' }]} onPress={handleShare}>
-                  <Text style={s.btnTxt}>🚀 Share Invite Link (30% Bonus)</Text>
+                  <Text style={s.btnTxt}>🚀 Share Website Invite Link</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[s.btn, { backgroundColor: '#0284c7', width: '100%' }]} onPress={openTelegram}>
                   <Text style={s.btnTxt}>✈️ Support (@Guri7412)</Text>
@@ -218,7 +195,7 @@ export default function App() {
             )}
           </ScrollView>
 
-          {/* Bottom Navigation (Fixed Height & Safe Lifted UI) */}
+          {/* Bottom Nav Lifted Above Screen Bottom */}
           <View style={s.bottomNav}>
             {[
               { id: 'Invest', label: 'Invest', icon: '⚡' },
@@ -236,32 +213,26 @@ export default function App() {
         </View>
       </ImageBackground>
 
-      {/* Deposit Modal (Centered On Screen) */}
+      {/* Recharge Modal (Screen Center) */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={s.modalOverlay}>
           <View style={s.modalBox}>
             <Text style={s.modalTitle}>Recharge & Payment</Text>
             {selectedPlan && <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 8 }}>{selectedPlan.name} | Amount: <Text style={{ color: '#16a34a', fontWeight: 'bold' }}>₹{selectedPlan.price}</Text></Text>}
             <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#334155', marginBottom: 4 }}>Select UPI ID:</Text>
-            
             <TouchableOpacity style={[s.upiOpt, selectedUpi === 'deepsingh7412@ibl' && s.upiActive]} onPress={() => setSelectedUpi('deepsingh7412@ibl')}>
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>1. deepsingh7412@ibl</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity style={[s.upiOpt, selectedUpi === 'mandeep7412@axl' && s.upiActive]} onPress={() => setSelectedUpi('mandeep7412@axl')}>
               <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>2. mandeep7412@axl</Text>
             </TouchableOpacity>
-            
             <View style={{ backgroundColor: '#f1f5f9', padding: 8, borderRadius: 6, marginVertical: 6 }}>
               <Text style={{ fontSize: 11, color: '#64748b' }}>Transfer to: <Text style={{ fontWeight: 'bold', color: '#0f172a' }}>{selectedUpi}</Text></Text>
             </View>
-            
             <TextInput style={s.input} placeholder="Enter 12-digit UTR No." placeholderTextColor="#94a3b8" value={transactionId} onChangeText={setTransactionId} keyboardType="number-pad" />
-            
             <TouchableOpacity style={[s.btn, { backgroundColor: '#16a34a', marginTop: 10, width: '100%', paddingVertical: 12 }]} onPress={handleDeposit}>
               <Text style={s.btnTxt}>Submit Deposit</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity style={{ alignItems: 'center', marginTop: 10, paddingVertical: 4 }} onPress={() => setModalVisible(false)}>
               <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: 'bold' }}>Cancel</Text>
             </TouchableOpacity>
@@ -269,20 +240,17 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* Withdraw Modal (Centered On Screen) */}
+      {/* Withdraw Modal (Screen Center) */}
       <Modal visible={withdrawModalVisible} transparent={true} animationType="fade">
         <View style={s.modalOverlay}>
           <View style={s.modalBox}>
             <Text style={s.modalTitle}>Withdraw Balance</Text>
             <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 8 }}>Available: <Text style={{ color: '#16a34a', fontWeight: 'bold' }}>₹{balance.toFixed(2)}</Text></Text>
-            
             <TextInput style={s.input} placeholder="Amount (Min ₹200)" placeholderTextColor="#94a3b8" value={withdrawAmount} onChangeText={setWithdrawAmount} keyboardType="number-pad" />
             <TextInput style={s.input} placeholder="Your UPI ID" placeholderTextColor="#94a3b8" value={withdrawUpi} onChangeText={setWithdrawUpi} />
-            
             <TouchableOpacity style={[s.btn, { backgroundColor: '#16a34a', marginTop: 10, width: '100%', paddingVertical: 12 }]} onPress={handleWithdraw}>
               <Text style={s.btnTxt}>Confirm Withdrawal</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity style={{ alignItems: 'center', marginTop: 10, paddingVertical: 4 }} onPress={() => setWithdrawModalVisible(false)}>
               <Text style={{ color: '#ef4444', fontSize: 13, fontWeight: 'bold' }}>Cancel</Text>
             </TouchableOpacity>
@@ -300,7 +268,7 @@ const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(10, 16, 29, 0.88)' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingTop: Platform.OS === 'android' ? 14 : 10, paddingBottom: 14, backgroundColor: 'rgba(14, 23, 38, 0.85)' },
   helpBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  scroll: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 105 },
+  scroll: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 110 },
   card: { backgroundColor: 'rgba(27, 38, 59, 0.92)', borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#2e3d5b' },
   btn: { borderRadius: 10, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
   btnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
@@ -316,25 +284,13 @@ const s = StyleSheet.create({
   histRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' },
   linkBox: { backgroundColor: '#0f172a', padding: 8, borderRadius: 8, marginBottom: 8 },
   profTxt: { color: '#e2e8f0', fontSize: 12, marginBottom: 6 },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 75,
-    paddingBottom: Platform.OS === 'android' ? 12 : 18,
-    paddingTop: 8,
-    backgroundColor: '#0c1322',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#1e293b',
-    elevation: 20,
-    zIndex: 100
-  },
+  bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 75, paddingBottom: Platform.OS === 'android' ? 14 : 20, paddingTop: 8, backgroundColor: '#0c1322', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#1e293b', elevation: 20, zIndex: 100 },
   navItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   modalBox: { backgroundColor: '#fff', borderRadius: 18, padding: 20, width: '100%', maxWidth: 360, elevation: 10 },
   modalTitle: { fontSize: 17, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 },
-  upiOpt: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8
+  upiOpt: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 10, marginBottom: 6 },
+  upiActive: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
+  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 10, color: '#0f172a', marginVertical: 4, fontSize: 13 }
+});
+                
