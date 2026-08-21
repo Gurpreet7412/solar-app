@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Share, Platform, StyleSheet } from 'react-native';
 
-// SIRF IS NUMBER SE LOGIN HONE PAR OWNER PANEL DIKHEGA
-const ADMIN_PHONE_NUMBER = '9999999999'; // <-- Apna Mobile Number yahan daalein
-
 export default function App() {
+  // Auth, OTP & Storage States
   const [currentUser, setCurrentUser] = useState(null);
   const [authMode, setAuthMode] = useState('signup');
   const [authPhone, setAuthPhone] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authReferral, setAuthReferral] = useState('');
   
+  // OTP Verification States
   const [otpSent, setOtpSent] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [userOtpInput, setUserOtpInput] = useState('');
   const [registeredUsers, setRegisteredUsers] = useState([]);
 
+  // Main App States
   const [balance, setBalance] = useState(1100.0);
   const [myActivePlans, setMyActivePlans] = useState([]);
   const [history, setHistory] = useState([
     { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
   ]);
 
+  // UI & Action States
   const [activeTab, setActiveTab] = useState('All');
   const [bottomNav, setBottomNav] = useState('Invest');
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,9 +45,7 @@ export default function App() {
   const todayStr = new Date().toDateString();
   const myRefCode = currentUser?.refCode || 'SOLAR7412';
 
-  // Check if logged in user is Owner
-  const isOwner = currentUser?.phone === ADMIN_PHONE_NUMBER;
-
+  // In-Memory Persistent Store
   useEffect(() => {
     if (!global.__SOLAR_DATA_STORE__) {
       global.__SOLAR_DATA_STORE__ = {
@@ -84,6 +83,7 @@ export default function App() {
     Linking.openURL(apkDownloadLink).catch(() => Alert.alert('Install App', 'Download link: ' + apkDownloadLink));
   };
 
+  // OTP Generation & Verification Logic
   const handleSendOtp = () => {
     if (!authPhone.trim() || authPhone.length !== 10) {
       return Alert.alert('Invalid Number', 'Kripya 10-digit ka mobile number enter karein.');
@@ -142,7 +142,7 @@ export default function App() {
       setUserOtpInput('');
     } else {
       const user = registeredUsers.find(u => u.phone === authPhone && u.password === authPassword);
-      if (!user && authPhone !== ADMIN_PHONE_NUMBER) {
+      if (!user && authPhone !== '9999999999') {
         return Alert.alert('Login Failed', 'Mobile number ya password galat hai.');
       }
       const loggedUser = user || { phone: authPhone, refCode: 'SOLAR' + authPhone.slice(-5) };
@@ -271,7 +271,7 @@ export default function App() {
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
   };
-   if (!currentUser) {
+  if (!currentUser) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
@@ -289,6 +289,7 @@ export default function App() {
               </TouchableOpacity>
             </View>
 
+            {/* Mobile Number & OTP Trigger */}
             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
               <TextInput 
                 style={[styles.authInput, { flex: 1, marginBottom: 0 }]} 
@@ -306,6 +307,7 @@ export default function App() {
               )}
             </View>
 
+            {/* OTP Input Field */}
             {authMode === 'signup' && (
               <TextInput 
                 style={[styles.authInput, { borderColor: otpSent ? '#22c55e' : '#334155' }]} 
@@ -370,6 +372,7 @@ export default function App() {
         <ScrollView contentContainerStyle={styles.scrollArea} showsVerticalScrollIndicator={false}>
           {bottomNav === 'Invest' && (
             <>
+              {/* Wallet Card */}
               <View style={styles.walletCard}>
                 <Text style={styles.walletLabel}>TOTAL WALLET BALANCE</Text>
                 <Text style={styles.walletBalance}>₹{balance.toFixed(2)}</Text>
@@ -383,6 +386,7 @@ export default function App() {
                 </View>
               </View>
 
+              {/* Running Investments */}
               {myActivePlans.length > 0 && (
                 <View style={{ marginBottom: 12 }}>
                   <Text style={styles.sectionHeading}>⚡ Running Investments ({myActivePlans.length})</Text>
@@ -408,6 +412,7 @@ export default function App() {
                 </View>
               )}
 
+              {/* Category Filter */}
               <View style={styles.filterRow}>
                 {['All', 'Weekly', '15 Days', '30 Days'].map((t) => (
                   <TouchableOpacity 
@@ -420,6 +425,7 @@ export default function App() {
                 ))}
               </View>
 
+              {/* 7 Plans */}
               {filtered.map((p) => (
                 <View key={p.id} style={styles.planCard}>
                   <View style={styles.planHeader}>
@@ -485,12 +491,9 @@ export default function App() {
                 <Text style={styles.btnTextWhite}>📲 Install / Download Latest App APK</Text>
               </TouchableOpacity>
 
-              {/* OWNER PANEL BUTTON - SIRF AAPKE ADMIN NUMBER PAR DIKHEGA */}
-              {isOwner && (
-                <TouchableOpacity style={styles.adminEntryBtn} onPress={() => setAdminModalVisible(true)}>
-                  <Text style={{ color: '#000', fontWeight: 'bold' }}>👑 Owner Panel ({depositRequests.length + withdrawRequests.length})</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity style={styles.adminEntryBtn} onPress={() => setAdminModalVisible(true)}>
+                <Text style={{ color: '#000', fontWeight: 'bold' }}>👑 Owner Panel ({depositRequests.length + withdrawRequests.length})</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity style={styles.supportBigBtn} onPress={openSupport}>
                 <Text style={styles.btnTextWhite}>✈️ Official Support (@Guri7412)</Text>
@@ -504,7 +507,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Bottom Nav */}
+      {/* Fixed Bottom Navigation */}
       <View style={styles.bottomNavContainer}>
         {[
           { id: 'Invest', l: 'Invest', i: '⚡' },
@@ -563,7 +566,7 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* Admin Panel Modal (Secret PIN: 881011 - Hidden Text) */}
+      {/* Admin Panel Modal (Secret PIN: 881011 - Hidden from UI) */}
       <Modal visible={adminModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.adminModalBox}>
@@ -713,4 +716,4 @@ const styles = StyleSheet.create({
   reqCard: { backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginBottom: 6 },
   actionBtn: { flex: 1, padding: 6, borderRadius: 6, alignItems: 'center' }
 });
-                
+            
