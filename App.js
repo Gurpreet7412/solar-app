@@ -102,11 +102,11 @@ export default function App() {
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
   };
-    return (
+     return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
 
-      {/* Top Header */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logoText}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
         <TouchableOpacity style={styles.supportBtn} onPress={openSupport}>
@@ -114,11 +114,12 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      {/* Main Scrollable Content */}
+      {/* Main Content Area */}
       <View style={styles.mainContentArea}>
         <ScrollView contentContainerStyle={styles.scrollArea} showsVerticalScrollIndicator={false}>
           {bottomNav === 'Invest' && (
             <>
+              {/* Wallet Card with Side-by-Side Recharge & Withdraw */}
               <View style={styles.walletCard}>
                 <Text style={styles.walletLabel}>TOTAL WALLET BALANCE</Text>
                 <Text style={styles.walletBalance}>₹{balance.toFixed(2)}</Text>
@@ -132,6 +133,7 @@ export default function App() {
                 </View>
               </View>
 
+              {/* Running Investments */}
               {myActivePlans.length > 0 && (
                 <View style={{ marginBottom: 12 }}>
                   <Text style={styles.sectionHeading}>⚡ Running Investments ({myActivePlans.length})</Text>
@@ -157,6 +159,7 @@ export default function App() {
                 </View>
               )}
 
+              {/* Plans Filter Tabs */}
               <View style={styles.filterRow}>
                 {['All', 'Weekly', '15 Days', '30 Days'].map((t) => (
                   <TouchableOpacity 
@@ -169,6 +172,7 @@ export default function App() {
                 ))}
               </View>
 
+              {/* All 7 Plans List */}
               {filtered.map((p) => (
                 <View key={p.id} style={styles.planCard}>
                   <View style={styles.planHeader}>
@@ -232,7 +236,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Permanently Visible Bottom Navigation Bar */}
+      {/* Fully Visible Fixed 4 Bottom Navigation Bar */}
       <View style={styles.bottomNavContainer}>
         {[
           { id: 'Invest', l: 'Invest', i: '⚡' },
@@ -246,7 +250,7 @@ export default function App() {
           </TouchableOpacity>
         ))}
       </View>
-      {/* Recharge Modal */}
+          {/* Recharge Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -267,7 +271,7 @@ export default function App() {
             <View style={{ flexDirection: 'row', gap: 6, marginVertical: 6 }}>
               <TouchableOpacity style={styles.phonepeBtn} onPress={() => openUpi('phonepe')}><Text style={styles.btnTextWhite}>🟣 PhonePe</Text></TouchableOpacity>
               <TouchableOpacity style={styles.paytmBtn} onPress={() => openUpi('paytm')}><Text style={styles.btnTextWhite}>🔵 Paytm</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.genericUpiBtn} onPress={() => openUpi('generic')}><Text style={styles.btnTextWhite}>🟢 GPay / Other</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.genericUpiBtn} onPress={() => openUpi('generic')}><Text style={styles.btnTextWhite}>🟢 GPay</Text></TouchableOpacity>
             </View>
 
             <TextInput style={[styles.inputField, { marginTop: 6 }]} placeholder="Enter 12-digit UTR No." value={transactionId} onChangeText={setTransactionId} keyboardType="number-pad" />
@@ -393,4 +397,4 @@ const styles = StyleSheet.create({
   reqCard: { backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginBottom: 6 },
   actionBtn: { flex: 1, padding: 6, borderRadius: 6, alignItems: 'center' }
 });
-        
+            
