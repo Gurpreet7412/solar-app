@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Share, Platform, StyleSheet } from 'react-native';
 
 export default function App() {
+  // Auth, OTP & Storage States
   const [currentUser, setCurrentUser] = useState(null);
   const [authMode, setAuthMode] = useState('signup');
   const [authPhone, setAuthPhone] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authReferral, setAuthReferral] = useState('');
+  
+  // OTP Verification States
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [userOtpInput, setUserOtpInput] = useState('');
   const [registeredUsers, setRegisteredUsers] = useState([]);
 
+  // Main App States
   const [balance, setBalance] = useState(1100.0);
+  const [myActivePlans, setMyActivePlans] = useState([]);
+  const [history, setHistory] = useState([
+    { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
+  ]);
+
+  // UI & Action States
   const [activeTab, setActiveTab] = useState('All');
   const [bottomNav, setBottomNav] = useState('Invest');
   const [modalVisible, setModalVisible] = useState(false);
@@ -23,18 +36,145 @@ export default function App() {
   const [transactionId, setTransactionId] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawUpi, setWithdrawUpi] = useState('');
-  const [myActivePlans, setMyActivePlans] = useState([]);
   
   const [depositRequests, setDepositRequests] = useState([]);
   const [withdrawRequests, setWithdrawRequests] = useState([]);
-  const [history, setHistory] = useState([
-    { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
-  ]);
 
   const telegramLink = 'https://t.me/Guri7412';
+  const apkDownloadLink = 'https://t.me/Guri7412'; // Direct APK / Telegram install link
   const todayStr = new Date().toDateString();
-
   const myRefCode = currentUser?.refCode || 'SOLAR7412';
+
+  // In-Memory Persistent Store
+  useEffect(() => {
+    if (!global.__SOLAR_DATA_STORE__) {
+      global.__SOLAR_DATA_STORE__ = {
+        users: [],
+        currentUser: null,
+        userBalances: {},
+        userPlans: {},
+        userHistory: {}
+      };
+    } else {
+      setRegisteredUsers(global.__SOLAR_DATA_STORE__.users || []);
+      if (global.__SOLAR_DATA_STORE__.currentUser) {
+        const u = global.__SOLAR_DATA_STORE__.currentUser;
+        setCurrentUser(u);
+        setBalance(global.__SOLAR_DATA_STORE__.userBalances[u.phone] ?? 1100.0);
+        setMyActivePlans(global.__SOLAR_DATA_STORE__.userPlans[u.phone] || []);
+        setHistory(global.__SOLAR_DATA_STORE__.userHistory[u.phone] || [
+          { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
+        ]);
+      }
+    }
+  }, []);
+
+  const updateUserData = (newBal, newPlans, newHist) => {
+    if (!currentUser) return;
+    const phone = currentUser.phone;
+    if (global.__SOLAR_DATA_STORE__) {
+      global.__SOLAR_DATA_STORE__.userBalances[phone] = newBal;
+      global.__SOLAR_DATA_STORE__.userPlans[phone] = newPlans;
+      global.__SOLAR_DATA_STORE__.userHistory[phone] = newHist;
+    }
+  };
+
+  const handleInstallApp = () => {
+    Linking.openURL(apkDownloadLink).catch(() => Alert.alert('Install App', 'Download link: ' + apkDownloadLink));
+  };
+
+  // OTP Generation & Verification Logic
+  const handleSendOtp = () => {
+    if (!authPhone.trim() || authPhone.length !== 10) {
+      return Alert.alert('Invalid Number', 'Kripya 10-digit ka mobile number enter karein.');
+    }
+    const exists = registeredUsers.find(u => u.phone === authPhone);
+    if (authMode === 'signup' && exists) {
+      return Alert.alert('Already Registered', 'Yeh number pehle se registered hai. Login karein.');
+    }
+
+    const randomOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedOtp(randomOtp);
+    setOtpSent(true);
+
+    Alert.alert('Verification OTP', `Aapka Solar Invest OTP Code hai: ${randomOtp}`);
+  };
+
+  const handleAuthSubmit = () => {
+    if (!authPhone.trim() || authPhone.length !== 10) {
+      return Alert.alert('Error', '10-digit Mobile number enter karein.');
+    }
+    if (!authPassword.trim() || authPassword.length < 4) {
+      return Alert.alert('Error', 'Kam se kam 4-digit Password banayein.');
+    }
+
+    if (authMode === 'signup') {
+      if (!otpSent) {
+        return Alert.alert('OTP Required', 'Pehle "Send OTP" button daba kar code verify karein.');
+      }
+      if (userOtpInput.trim() !== generatedOtp) {
+        return Alert.alert('Invalid OTP', 'Aapka dala gaya OTP galat hai.');
+      }
+
+      const uniqueCode = 'SOLAR' + authPhone.slice(-5);
+      const newUser = { phone: authPhone, password: authPassword, refCode: uniqueCode, referralUsed: authReferral };
+      const updatedList = [...registeredUsers, newUser];
+      setRegisteredUsers(updatedList);
+      setCurrentUser(newUser);
+      
+      const initBal = 1100.0;
+      const initPlans = [];
+      const initHist = [{ id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }];
+      
+      setBalance(initBal);
+      setMyActivePlans(initPlans);
+      setHistory(initHist);
+
+      if (global.__SOLAR_DATA_STORE__) {
+        global.__SOLAR_DATA_STORE__.users = updatedList;
+        global.__SOLAR_DATA_STORE__.currentUser = newUser;
+        global.__SOLAR_DATA_STORE__.userBalances[authPhone] = initBal;
+        global.__SOLAR_DATA_STORE__.userPlans[authPhone] = initPlans;
+        global.__SOLAR_DATA_STORE__.userHistory[authPhone] = initHist;
+      }
+      Alert.alert('Verified & Registered', `Account ban gaya! Referral Code: ${uniqueCode}`);
+      setOtpSent(false);
+      setUserOtpInput('');
+    } else {
+      const user = registeredUsers.find(u => u.phone === authPhone && u.password === authPassword);
+      if (!user && authPhone !== '9999999999') {
+        return Alert.alert('Login Failed', 'Mobile number ya password galat hai.');
+      }
+      const loggedUser = user || { phone: authPhone, refCode: 'SOLAR' + authPhone.slice(-5) };
+      setCurrentUser(loggedUser);
+      
+      const savedBal = global.__SOLAR_DATA_STORE__?.userBalances[authPhone] ?? 1100.0;
+      const savedPlans = global.__SOLAR_DATA_STORE__?.userPlans[authPhone] || [];
+      const savedHist = global.__SOLAR_DATA_STORE__?.userHistory[authPhone] || [
+        { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
+      ];
+
+      setBalance(savedBal);
+      setMyActivePlans(savedPlans);
+      setHistory(savedHist);
+
+      if (global.__SOLAR_DATA_STORE__) {
+        global.__SOLAR_DATA_STORE__.currentUser = loggedUser;
+      }
+      Alert.alert('Welcome Back', 'Login successful!');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    if (global.__SOLAR_DATA_STORE__) {
+      global.__SOLAR_DATA_STORE__.currentUser = null;
+    }
+    setAuthPhone('');
+    setAuthPassword('');
+    setOtpSent(false);
+    setUserOtpInput('');
+  };
 
   const plans = [
     { id: 1, badge: '⚡ Fast', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
@@ -48,41 +188,6 @@ export default function App() {
 
   const filtered = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
   const openSupport = () => Linking.openURL(telegramLink).catch(() => Alert.alert('Support', 'Telegram: @Guri7412'));
-
-  const handleAuthSubmit = () => {
-    if (!authPhone.trim() || authPhone.length < 10) {
-      return Alert.alert('Error', '10-digit valid Mobile number enter karein.');
-    }
-    if (!authPassword.trim() || authPassword.length < 4) {
-      return Alert.alert('Error', 'Kam se kam 4-digit Password banayein.');
-    }
-
-    if (authMode === 'signup') {
-      const exists = registeredUsers.find(u => u.phone === authPhone);
-      if (exists) {
-        return Alert.alert('Error', 'Yeh number pehle se registered hai. Login karein.');
-      }
-      const uniqueCode = 'SOLAR' + authPhone.slice(-5);
-      const newUser = { phone: authPhone, password: authPassword, refCode: uniqueCode, referralUsed: authReferral };
-      
-      setRegisteredUsers([...registeredUsers, newUser]);
-      setCurrentUser(newUser);
-      Alert.alert('Success', `Account ban gaya! Aapka Referral Code: ${uniqueCode}`);
-    } else {
-      const user = registeredUsers.find(u => u.phone === authPhone && u.password === authPassword);
-      if (!user && authPhone !== '9999999999') {
-        return Alert.alert('Login Failed', 'Number ya password galat hai.');
-      }
-      setCurrentUser(user || { phone: authPhone, refCode: 'SOLAR' + authPhone.slice(-5) });
-      Alert.alert('Welcome Back', 'Login successful!');
-    }
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setAuthPhone('');
-    setAuthPassword('');
-  };
 
   const openUpi = (app) => {
     const amt = Number(depositAmount) > 0 ? depositAmount : '500';
@@ -103,19 +208,31 @@ export default function App() {
         { text: 'Recharge', onPress: () => { setDepositAmount(p.price.toString()); setModalVisible(true); } }
       ]);
     }
-    setBalance(b => b - p.price);
-    setMyActivePlans([{ id: Date.now().toString(), name: p.name, price: p.price, daily: p.daily, daysLeft: p.daysCount, lastCollected: '' }, ...myActivePlans]);
-    setHistory([{ id: Date.now().toString(), type: `Invest: ${p.name}`, amount: `-₹${p.price}`, status: 'Running', date: 'Today' }, ...history]);
-    Alert.alert('Success', `${p.name} activate ho gaya! (30% Referral Bonus Applicable)`);
+    const newBal = balance - p.price;
+    const newPlans = [{ id: Date.now().toString(), name: p.name, price: p.price, daily: p.daily, daysLeft: p.daysCount, lastCollected: '' }, ...myActivePlans];
+    const newHist = [{ id: Date.now().toString(), type: `Invest: ${p.name}`, amount: `-₹${p.price}`, status: 'Running', date: 'Today' }, ...history];
+
+    setBalance(newBal);
+    setMyActivePlans(newPlans);
+    setHistory(newHist);
+    updateUserData(newBal, newPlans, newHist);
+
+    Alert.alert('Success', `${p.name} activate ho gaya! Naya Balance: ₹${newBal.toFixed(2)}`);
   };
 
   const handleClaimIncome = (plan) => {
     if (plan.lastCollected === todayStr) {
       return Alert.alert('Already Collected', 'Aapne aaj ki income claim kar li hai.');
     }
-    setBalance(b => b + plan.daily);
-    setMyActivePlans(myActivePlans.map(p => p.id === plan.id ? { ...p, lastCollected: todayStr } : p));
-    setHistory([{ id: Date.now().toString(), type: `Income: ${plan.name}`, amount: `+₹${plan.daily}`, status: 'Credited', date: 'Today' }, ...history]);
+    const newBal = balance + plan.daily;
+    const newPlans = myActivePlans.map(p => p.id === plan.id ? { ...p, lastCollected: todayStr } : p);
+    const newHist = [{ id: Date.now().toString(), type: `Income: ${plan.name}`, amount: `+₹${plan.daily}`, status: 'Credited', date: 'Today' }, ...history];
+
+    setBalance(newBal);
+    setMyActivePlans(newPlans);
+    setHistory(newHist);
+    updateUserData(newBal, newPlans, newHist);
+
     Alert.alert('Success', `₹${plan.daily} wallet me add ho gaye!`);
   };
 
@@ -126,7 +243,11 @@ export default function App() {
     const amt = Number(depositAmount) > 0 ? Number(depositAmount) : 500;
     const req = { id: Date.now().toString(), amount: amt, utr: transactionId, upi: selectedUpi, user: currentUser?.phone, date: 'Today' };
     setDepositRequests([req, ...depositRequests]);
-    setHistory([{ id: req.id, type: 'Recharge Request', amount: `+₹${amt}`, status: 'Pending Approval', date: 'Today' }, ...history]);
+    
+    const newHist = [{ id: req.id, type: 'Recharge Request', amount: `+₹${amt}`, status: 'Pending Approval', date: 'Today' }, ...history];
+    setHistory(newHist);
+    updateUserData(balance, myActivePlans, newHist);
+
     Alert.alert('Request Sent', 'Recharge verify hone ke baad add hoga.');
     setModalVisible(false);
     setTransactionId('');
@@ -137,44 +258,71 @@ export default function App() {
       return Alert.alert('Error', 'Details check karein (Min ₹200).');
     }
     const amt = Number(withdrawAmount);
-    setBalance(b => b - amt);
+    const newBal = balance - amt;
     const req = { id: Date.now().toString(), amount: amt, upi: withdrawUpi, user: currentUser?.phone, date: 'Today' };
     setWithdrawRequests([req, ...withdrawRequests]);
-    setHistory([{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Admin Review', date: 'Today' }, ...history]);
+
+    const newHist = [{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Admin Review', date: 'Today' }, ...history];
+    setBalance(newBal);
+    setHistory(newHist);
+    updateUserData(newBal, myActivePlans, newHist);
+
     Alert.alert('Request Sent', `₹${amt} withdrawal submit ho gaya.`);
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
   };
-        if (!currentUser) {
+   if (!currentUser) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
         <View style={styles.authWrapper}>
           <View style={styles.authCard}>
             <Text style={styles.authLogo}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
-            <Text style={styles.authSubtitle}>{authMode === 'signup' ? 'Create New Account' : 'Login to Your Account'}</Text>
+            <Text style={styles.authSubtitle}>{authMode === 'signup' ? 'Create & Verify Account' : 'Login to Your Account'}</Text>
 
             <View style={styles.authToggleRow}>
-              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'signup' && styles.authToggleActive]} onPress={() => setAuthMode('signup')}>
-                <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>Sign Up</Text>
+              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'signup' && styles.authToggleActive]} onPress={() => { setAuthMode('signup'); setOtpSent(false); }}>
+                <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>Sign Up (OTP)</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'login' && styles.authToggleActive]} onPress={() => setAuthMode('login')}>
+              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'login' && styles.authToggleActive]} onPress={() => { setAuthMode('login'); setOtpSent(false); }}>
                 <Text style={[styles.authToggleText, authMode === 'login' && styles.authToggleTextActive]}>Login</Text>
               </TouchableOpacity>
             </View>
 
-            <TextInput 
-              style={styles.authInput} 
-              placeholder="Mobile Number" 
-              placeholderTextColor="#64748b" 
-              value={authPhone} 
-              onChangeText={setAuthPhone} 
-              keyboardType="number-pad" 
-            />
+            {/* Mobile Number & OTP Trigger */}
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+              <TextInput 
+                style={[styles.authInput, { flex: 1, marginBottom: 0 }]} 
+                placeholder="10-digit Mobile No." 
+                placeholderTextColor="#64748b" 
+                value={authPhone} 
+                onChangeText={setAuthPhone} 
+                keyboardType="number-pad" 
+                maxLength={10}
+              />
+              {authMode === 'signup' && (
+                <TouchableOpacity style={styles.otpBtn} onPress={handleSendOtp}>
+                  <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 11 }}>{otpSent ? 'Resend' : 'Send OTP'}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* OTP Input Field */}
+            {authMode === 'signup' && (
+              <TextInput 
+                style={[styles.authInput, { borderColor: otpSent ? '#22c55e' : '#334155' }]} 
+                placeholder="Enter 4-digit OTP Code" 
+                placeholderTextColor="#64748b" 
+                value={userOtpInput} 
+                onChangeText={setUserOtpInput} 
+                keyboardType="number-pad" 
+                maxLength={4}
+              />
+            )}
 
             <TextInput 
               style={styles.authInput} 
-              placeholder="Password" 
+              placeholder="Password (Min 4 digit)" 
               placeholderTextColor="#64748b" 
               secureTextEntry 
               value={authPassword} 
@@ -192,7 +340,7 @@ export default function App() {
             )}
 
             <TouchableOpacity style={styles.authSubmitBtn} onPress={handleAuthSubmit}>
-              <Text style={styles.authSubmitText}>{authMode === 'signup' ? 'Register & Get ₹1100 Bonus' : 'Login'}</Text>
+              <Text style={styles.authSubmitText}>{authMode === 'signup' ? 'Verify OTP & Register' : 'Login'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={{ marginTop: 15, alignItems: 'center' }} onPress={openSupport}>
@@ -315,14 +463,18 @@ export default function App() {
               <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: 'bold' }}>🎉 30% DIRECT BONUS</Text>
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: 'bold', marginVertical: 6 }}>Invite Friends & Earn 30% Commission</Text>
               
-              <View style={{ backgroundColor: '#0f172a', padding: 14, borderRadius: 10, marginVertical: 10, borderWidth: 1, borderColor: '#334155' }}>
+              <View style={{ backgroundColor: '#0f172a', padding: 14, borderRadius: 10, marginVertical: 8, borderWidth: 1, borderColor: '#334155' }}>
                 <Text style={{ color: '#94a3b8', fontSize: 12 }}>YOUR REFERRAL CODE:</Text>
                 <Text style={{ color: '#f59e0b', fontSize: 22, fontWeight: 'bold', marginVertical: 4 }}>{myRefCode}</Text>
-                <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>Share this code with your friends to register and earn 30% instant commission on their investment.</Text>
+                <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>Share this code with friends to earn 30% instant commission on their investments.</Text>
               </View>
 
-              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest App & Start Daily Income!\n\nUse my Referral Code: ${myRefCode}\n\nGet Official App & Updates from Telegram:\n${telegramLink}` })}>
-                <Text style={styles.btnTextWhite}>🚀 Share Invite Message</Text>
+              <TouchableOpacity style={styles.installDirectBtn} onPress={handleInstallApp}>
+                <Text style={styles.btnTextWhite}>📲 Download / Install App APK</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest App & Start Daily Income!\n\nUse my Referral Code: ${myRefCode}\n\n📲 Download & Install Official App:\n${apkDownloadLink}` })}>
+                <Text style={styles.btnTextWhite}>🚀 Share Invite & APK Link</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -332,9 +484,14 @@ export default function App() {
               <Text style={styles.sectionHeading}>User Dashboard</Text>
               <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Phone: {currentUser.phone}</Text>
               <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Referral Code: <Text style={{ color: '#f59e0b', fontWeight: 'bold' }}>{myRefCode}</Text></Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Total Balance: ₹{balance.toFixed(2)}</Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 12 }}>Active Plans: {myActivePlans.length}</Text>
+              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Current Balance: ₹{balance.toFixed(2)}</Text>
+              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 10 }}>Active Plans: {myActivePlans.length}</Text>
               
+              {/* Install App Button in Profile */}
+              <TouchableOpacity style={styles.installDirectBtn} onPress={handleInstallApp}>
+                <Text style={styles.btnTextWhite}>📲 Install / Download Latest App APK</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.adminEntryBtn} onPress={() => setAdminModalVisible(true)}>
                 <Text style={{ color: '#000', fontWeight: 'bold' }}>👑 Owner Panel ({depositRequests.length + withdrawRequests.length})</Text>
               </TouchableOpacity>
@@ -351,7 +508,7 @@ export default function App() {
         </ScrollView>
       </View>
 
-      {/* Permanently Visible Bottom Nav */}
+      {/* Fixed Bottom Navigation */}
       <View style={styles.bottomNavContainer}>
         {[
           { id: 'Invest', l: 'Invest', i: '⚡' },
@@ -365,7 +522,7 @@ export default function App() {
           </TouchableOpacity>
         ))}
       </View>
-        {/* Recharge Modal */}
+            {/* Recharge Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -429,7 +586,13 @@ export default function App() {
                     <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>₹{d.amount} | UTR: {d.utr}</Text>
                     <Text style={{ color: '#94a3b8', fontSize: 10 }}>User: {d.user}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { setBalance(b => b + d.amount); setDepositRequests(depositRequests.filter(x => x.id !== d.id)); Alert.alert('Approved', `₹${d.amount} added!`); }}><Text style={styles.btnTextWhite}>Approve</Text></TouchableOpacity>
+                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { 
+                        const approvedBal = balance + d.amount;
+                        setBalance(approvedBal);
+                        updateUserData(approvedBal, myActivePlans, history);
+                        setDepositRequests(depositRequests.filter(x => x.id !== d.id)); 
+                        Alert.alert('Approved', `₹${d.amount} added!`); 
+                      }}><Text style={styles.btnTextWhite}>Approve</Text></TouchableOpacity>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { setDepositRequests(depositRequests.filter(x => x.id !== d.id)); }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
                     </View>
                   </View>
@@ -441,7 +604,13 @@ export default function App() {
                     <Text style={{ color: '#94a3b8', fontSize: 10 }}>User: {w.user}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); Alert.alert('Paid', 'Marked completed!'); }}><Text style={styles.btnTextWhite}>Paid</Text></TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { setBalance(b => b + w.amount); setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); Alert.alert('Refunded', 'Withdrawal refund ho gaya.'); }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
+                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { 
+                        const refundBal = balance + w.amount;
+                        setBalance(refundBal);
+                        updateUserData(refundBal, myActivePlans, history);
+                        setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); 
+                        Alert.alert('Refunded', 'Withdrawal refund ho gaya.'); 
+                      }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
                     </View>
                   </View>
                 ))}
@@ -467,6 +636,7 @@ const styles = StyleSheet.create({
   authToggleText: { color: '#94a3b8', fontSize: 12, fontWeight: 'bold' },
   authToggleTextActive: { color: '#000' },
   authInput: { backgroundColor: '#0f172a', color: '#fff', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#334155', marginBottom: 12, fontSize: 13 },
+  otpBtn: { backgroundColor: '#f59e0b', paddingHorizontal: 12, justifyContent: 'center', alignItems: 'center', borderRadius: 8 },
   authSubmitBtn: { backgroundColor: '#16a34a', padding: 13, borderRadius: 8, alignItems: 'center', marginTop: 6 },
   authSubmitText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? 36 : 14, paddingBottom: 14, backgroundColor: '#0e1726', borderBottomWidth: 1, borderColor: '#1e293b' },
@@ -501,7 +671,8 @@ const styles = StyleSheet.create({
   investBtnText: { color: '#000', fontWeight: 'bold', fontSize: 12 },
   cardContainer: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14 },
   historyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  shareBtn: { backgroundColor: '#16a34a', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 6 },
+  installDirectBtn: { backgroundColor: '#0284c7', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 },
+  shareBtn: { backgroundColor: '#16a34a', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 4 },
   adminEntryBtn: { backgroundColor: '#f59e0b', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 },
   supportBigBtn: { backgroundColor: '#0284c7', padding: 11, borderRadius: 10, alignItems: 'center' },
   logoutBtn: { padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 10, borderWidth: 1, borderColor: '#ef4444' },
@@ -526,4 +697,4 @@ const styles = StyleSheet.create({
   reqCard: { backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginBottom: 6 },
   actionBtn: { flex: 1, padding: 6, borderRadius: 6, alignItems: 'center' }
 });
-            
+                
