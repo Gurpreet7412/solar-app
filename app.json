@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Solar Invest",
-    "slug": "solar-nvest-app",
+    "slug": "solar-invest-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./icon.png",
@@ -31,4 +31,3 @@
     }
   }
 }
-
