@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Share, Platform, StyleSheet } from 'react-native';
 
 export default function App() {
-  // Auth & Unique User States
   const [currentUser, setCurrentUser] = useState(null);
   const [authMode, setAuthMode] = useState('signup');
   const [authPhone, setAuthPhone] = useState('');
@@ -10,7 +9,6 @@ export default function App() {
   const [authReferral, setAuthReferral] = useState('');
   const [registeredUsers, setRegisteredUsers] = useState([]);
 
-  // App States
   const [balance, setBalance] = useState(1100.0);
   const [activeTab, setActiveTab] = useState('All');
   const [bottomNav, setBottomNav] = useState('Invest');
@@ -36,9 +34,7 @@ export default function App() {
   const telegramLink = 'https://t.me/Guri7412';
   const todayStr = new Date().toDateString();
 
-  // Dynamic user specific referral link
   const myRefCode = currentUser?.refCode || 'SOLAR7412';
-  const userRefLink = `https://solarinvest.in/register?ref=${myRefCode}`;
 
   const plans = [
     { id: 1, badge: '⚡ Fast', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
@@ -66,7 +62,6 @@ export default function App() {
       if (exists) {
         return Alert.alert('Error', 'Yeh number pehle se registered hai. Login karein.');
       }
-      // Unique referral code for each user
       const uniqueCode = 'SOLAR' + authPhone.slice(-5);
       const newUser = { phone: authPhone, password: authPassword, refCode: uniqueCode, referralUsed: authReferral };
       
@@ -150,7 +145,7 @@ export default function App() {
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
   };
-    if (!currentUser) {
+        if (!currentUser) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
@@ -320,15 +315,14 @@ export default function App() {
               <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: 'bold' }}>🎉 30% DIRECT BONUS</Text>
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: 'bold', marginVertical: 6 }}>Invite Friends & Earn 30% Commission</Text>
               
-              <View style={{ backgroundColor: '#0f172a', padding: 12, borderRadius: 8, marginVertical: 8, borderWidth: 1, borderColor: '#334155' }}>
-                <Text style={{ color: '#94a3b8', fontSize: 11 }}>YOUR PERSONAL REFERRAL CODE:</Text>
-                <Text style={{ color: '#f59e0b', fontSize: 18, fontWeight: 'bold', marginVertical: 2 }}>{myRefCode}</Text>
-                <Text style={{ color: '#64748b', fontSize: 11, marginTop: 4 }}>INVITE LINK:</Text>
-                <Text style={{ color: '#22c55e', fontSize: 11, fontWeight: 'bold' }}>{userRefLink}</Text>
+              <View style={{ backgroundColor: '#0f172a', padding: 14, borderRadius: 10, marginVertical: 10, borderWidth: 1, borderColor: '#334155' }}>
+                <Text style={{ color: '#94a3b8', fontSize: 12 }}>YOUR REFERRAL CODE:</Text>
+                <Text style={{ color: '#f59e0b', fontSize: 22, fontWeight: 'bold', marginVertical: 4 }}>{myRefCode}</Text>
+                <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>Share this code with your friends to register and earn 30% instant commission on their investment.</Text>
               </View>
 
-              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest and earn daily income! Use my code ${myRefCode} or link: ${userRefLink}` })}>
-                <Text style={styles.btnTextWhite}>🚀 Share My Invite Link</Text>
+              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest App & Start Daily Income!\n\nUse my Referral Code: ${myRefCode}\n\nGet Official App & Updates from Telegram:\n${telegramLink}` })}>
+                <Text style={styles.btnTextWhite}>🚀 Share Invite Message</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -371,7 +365,7 @@ export default function App() {
           </TouchableOpacity>
         ))}
       </View>
-            {/* Recharge Modal */}
+        {/* Recharge Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -532,4 +526,4 @@ const styles = StyleSheet.create({
   reqCard: { backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginBottom: 6 },
   actionBtn: { flex: 1, padding: 6, borderRadius: 6, alignItems: 'center' }
 });
-
+            
