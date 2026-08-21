@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Share, Platform, StyleSheet } from 'react-native';
 
 export default function App() {
+  // Auth & Unique User States
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authMode, setAuthMode] = useState('signup');
+  const [authPhone, setAuthPhone] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authReferral, setAuthReferral] = useState('');
+  const [registeredUsers, setRegisteredUsers] = useState([]);
+
+  // App States
   const [balance, setBalance] = useState(1100.0);
   const [activeTab, setActiveTab] = useState('All');
   const [bottomNav, setBottomNav] = useState('Invest');
@@ -24,9 +33,12 @@ export default function App() {
     { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
   ]);
 
-  const refLink = 'https://solarinvest.in/register?ref=Guri7412';
   const telegramLink = 'https://t.me/Guri7412';
   const todayStr = new Date().toDateString();
+
+  // Dynamic user specific referral link
+  const myRefCode = currentUser?.refCode || 'SOLAR7412';
+  const userRefLink = `https://solarinvest.in/register?ref=${myRefCode}`;
 
   const plans = [
     { id: 1, badge: '⚡ Fast', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
@@ -40,6 +52,42 @@ export default function App() {
 
   const filtered = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
   const openSupport = () => Linking.openURL(telegramLink).catch(() => Alert.alert('Support', 'Telegram: @Guri7412'));
+
+  const handleAuthSubmit = () => {
+    if (!authPhone.trim() || authPhone.length < 10) {
+      return Alert.alert('Error', '10-digit valid Mobile number enter karein.');
+    }
+    if (!authPassword.trim() || authPassword.length < 4) {
+      return Alert.alert('Error', 'Kam se kam 4-digit Password banayein.');
+    }
+
+    if (authMode === 'signup') {
+      const exists = registeredUsers.find(u => u.phone === authPhone);
+      if (exists) {
+        return Alert.alert('Error', 'Yeh number pehle se registered hai. Login karein.');
+      }
+      // Unique referral code for each user
+      const uniqueCode = 'SOLAR' + authPhone.slice(-5);
+      const newUser = { phone: authPhone, password: authPassword, refCode: uniqueCode, referralUsed: authReferral };
+      
+      setRegisteredUsers([...registeredUsers, newUser]);
+      setCurrentUser(newUser);
+      Alert.alert('Success', `Account ban gaya! Aapka Referral Code: ${uniqueCode}`);
+    } else {
+      const user = registeredUsers.find(u => u.phone === authPhone && u.password === authPassword);
+      if (!user && authPhone !== '9999999999') {
+        return Alert.alert('Login Failed', 'Number ya password galat hai.');
+      }
+      setCurrentUser(user || { phone: authPhone, refCode: 'SOLAR' + authPhone.slice(-5) });
+      Alert.alert('Welcome Back', 'Login successful!');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setAuthPhone('');
+    setAuthPassword('');
+  };
 
   const openUpi = (app) => {
     const amt = Number(depositAmount) > 0 ? depositAmount : '500';
@@ -81,7 +129,7 @@ export default function App() {
       return Alert.alert('Required', 'Valid 12-digit UTR enter karein.');
     }
     const amt = Number(depositAmount) > 0 ? Number(depositAmount) : 500;
-    const req = { id: Date.now().toString(), amount: amt, utr: transactionId, upi: selectedUpi, date: 'Today' };
+    const req = { id: Date.now().toString(), amount: amt, utr: transactionId, upi: selectedUpi, user: currentUser?.phone, date: 'Today' };
     setDepositRequests([req, ...depositRequests]);
     setHistory([{ id: req.id, type: 'Recharge Request', amount: `+₹${amt}`, status: 'Pending Approval', date: 'Today' }, ...history]);
     Alert.alert('Request Sent', 'Recharge verify hone ke baad add hoga.');
@@ -95,31 +143,93 @@ export default function App() {
     }
     const amt = Number(withdrawAmount);
     setBalance(b => b - amt);
-    const req = { id: Date.now().toString(), amount: amt, upi: withdrawUpi, date: 'Today' };
+    const req = { id: Date.now().toString(), amount: amt, upi: withdrawUpi, user: currentUser?.phone, date: 'Today' };
     setWithdrawRequests([req, ...withdrawRequests]);
     setHistory([{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Admin Review', date: 'Today' }, ...history]);
     Alert.alert('Request Sent', `₹${amt} withdrawal submit ho gaya.`);
     setWithdrawModalVisible(false);
     setWithdrawAmount('');
   };
-     return (
+    if (!currentUser) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
+        <View style={styles.authWrapper}>
+          <View style={styles.authCard}>
+            <Text style={styles.authLogo}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
+            <Text style={styles.authSubtitle}>{authMode === 'signup' ? 'Create New Account' : 'Login to Your Account'}</Text>
+
+            <View style={styles.authToggleRow}>
+              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'signup' && styles.authToggleActive]} onPress={() => setAuthMode('signup')}>
+                <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>Sign Up</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'login' && styles.authToggleActive]} onPress={() => setAuthMode('login')}>
+                <Text style={[styles.authToggleText, authMode === 'login' && styles.authToggleTextActive]}>Login</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TextInput 
+              style={styles.authInput} 
+              placeholder="Mobile Number" 
+              placeholderTextColor="#64748b" 
+              value={authPhone} 
+              onChangeText={setAuthPhone} 
+              keyboardType="number-pad" 
+            />
+
+            <TextInput 
+              style={styles.authInput} 
+              placeholder="Password" 
+              placeholderTextColor="#64748b" 
+              secureTextEntry 
+              value={authPassword} 
+              onChangeText={setAuthPassword} 
+            />
+
+            {authMode === 'signup' && (
+              <TextInput 
+                style={styles.authInput} 
+                placeholder="Referral Code (Optional)" 
+                placeholderTextColor="#64748b" 
+                value={authReferral} 
+                onChangeText={setAuthReferral} 
+              />
+            )}
+
+            <TouchableOpacity style={styles.authSubmitBtn} onPress={handleAuthSubmit}>
+              <Text style={styles.authSubmitText}>{authMode === 'signup' ? 'Register & Get ₹1100 Bonus' : 'Login'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={{ marginTop: 15, alignItems: 'center' }} onPress={openSupport}>
+              <Text style={{ color: '#0284c7', fontSize: 12 }}>Need Help? Contact Support (@Guri7412)</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.logoText}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
+        <View>
+          <Text style={styles.logoText}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
+          <Text style={{ color: '#64748b', fontSize: 10 }}>ID: {currentUser.phone} | Code: <Text style={{color:'#f59e0b'}}>{myRefCode}</Text></Text>
+        </View>
         <TouchableOpacity style={styles.supportBtn} onPress={openSupport}>
           <Text style={styles.supportBtnText}>✈️ @Guri7412</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <View style={styles.mainContentArea}>
         <ScrollView contentContainerStyle={styles.scrollArea} showsVerticalScrollIndicator={false}>
           {bottomNav === 'Invest' && (
             <>
-              {/* Wallet Card with Side-by-Side Recharge & Withdraw */}
+              {/* Wallet Card */}
               <View style={styles.walletCard}>
                 <Text style={styles.walletLabel}>TOTAL WALLET BALANCE</Text>
                 <Text style={styles.walletBalance}>₹{balance.toFixed(2)}</Text>
@@ -159,7 +269,7 @@ export default function App() {
                 </View>
               )}
 
-              {/* Plans Filter Tabs */}
+              {/* Category Filter */}
               <View style={styles.filterRow}>
                 {['All', 'Weekly', '15 Days', '30 Days'].map((t) => (
                   <TouchableOpacity 
@@ -172,7 +282,7 @@ export default function App() {
                 ))}
               </View>
 
-              {/* All 7 Plans List */}
+              {/* 7 Plans */}
               {filtered.map((p) => (
                 <View key={p.id} style={styles.planCard}>
                   <View style={styles.planHeader}>
@@ -209,11 +319,16 @@ export default function App() {
             <View style={styles.cardContainer}>
               <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: 'bold' }}>🎉 30% DIRECT BONUS</Text>
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: 'bold', marginVertical: 6 }}>Invite Friends & Earn 30% Commission</Text>
-              <View style={styles.refBox}>
-                <Text style={{ color: '#22c55e', fontWeight: 'bold', fontSize: 12 }}>{refLink}</Text>
+              
+              <View style={{ backgroundColor: '#0f172a', padding: 12, borderRadius: 8, marginVertical: 8, borderWidth: 1, borderColor: '#334155' }}>
+                <Text style={{ color: '#94a3b8', fontSize: 11 }}>YOUR PERSONAL REFERRAL CODE:</Text>
+                <Text style={{ color: '#f59e0b', fontSize: 18, fontWeight: 'bold', marginVertical: 2 }}>{myRefCode}</Text>
+                <Text style={{ color: '#64748b', fontSize: 11, marginTop: 4 }}>INVITE LINK:</Text>
+                <Text style={{ color: '#22c55e', fontSize: 11, fontWeight: 'bold' }}>{userRefLink}</Text>
               </View>
-              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest & start daily income: ${refLink}` })}>
-                <Text style={styles.btnTextWhite}>🚀 Share Invite Link</Text>
+
+              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest and earn daily income! Use my code ${myRefCode} or link: ${userRefLink}` })}>
+                <Text style={styles.btnTextWhite}>🚀 Share My Invite Link</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -221,7 +336,9 @@ export default function App() {
           {bottomNav === 'Profile' && (
             <View style={styles.cardContainer}>
               <Text style={styles.sectionHeading}>User Dashboard</Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 6 }}>Total Balance: ₹{balance.toFixed(2)}</Text>
+              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Phone: {currentUser.phone}</Text>
+              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Referral Code: <Text style={{ color: '#f59e0b', fontWeight: 'bold' }}>{myRefCode}</Text></Text>
+              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Total Balance: ₹{balance.toFixed(2)}</Text>
               <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 12 }}>Active Plans: {myActivePlans.length}</Text>
               
               <TouchableOpacity style={styles.adminEntryBtn} onPress={() => setAdminModalVisible(true)}>
@@ -231,12 +348,16 @@ export default function App() {
               <TouchableOpacity style={styles.supportBigBtn} onPress={openSupport}>
                 <Text style={styles.btnTextWhite}>✈️ Official Support (@Guri7412)</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+                <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>🚪 Logout Account</Text>
+              </TouchableOpacity>
             </View>
           )}
         </ScrollView>
       </View>
 
-      {/* Fully Visible Fixed 4 Bottom Navigation Bar */}
+      {/* Permanently Visible Bottom Nav */}
       <View style={styles.bottomNavContainer}>
         {[
           { id: 'Invest', l: 'Invest', i: '⚡' },
@@ -250,7 +371,7 @@ export default function App() {
           </TouchableOpacity>
         ))}
       </View>
-          {/* Recharge Modal */}
+            {/* Recharge Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -312,6 +433,7 @@ export default function App() {
                 {depositRequests.length === 0 ? <Text style={{ color: '#64748b', fontSize: 11, marginBottom: 6 }}>No pending recharges</Text> : depositRequests.map(d => (
                   <View key={d.id} style={styles.reqCard}>
                     <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>₹{d.amount} | UTR: {d.utr}</Text>
+                    <Text style={{ color: '#94a3b8', fontSize: 10 }}>User: {d.user}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { setBalance(b => b + d.amount); setDepositRequests(depositRequests.filter(x => x.id !== d.id)); Alert.alert('Approved', `₹${d.amount} added!`); }}><Text style={styles.btnTextWhite}>Approve</Text></TouchableOpacity>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { setDepositRequests(depositRequests.filter(x => x.id !== d.id)); }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
@@ -322,6 +444,7 @@ export default function App() {
                 {withdrawRequests.length === 0 ? <Text style={{ color: '#64748b', fontSize: 11 }}>No pending withdrawals</Text> : withdrawRequests.map(w => (
                   <View key={w.id} style={styles.reqCard}>
                     <Text style={{ color: '#f59e0b', fontWeight: 'bold' }}>₹{w.amount} | UPI: {w.upi}</Text>
+                    <Text style={{ color: '#94a3b8', fontSize: 10 }}>User: {w.user}</Text>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); Alert.alert('Paid', 'Marked completed!'); }}><Text style={styles.btnTextWhite}>Paid</Text></TouchableOpacity>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { setBalance(b => b + w.amount); setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); Alert.alert('Refunded', 'Withdrawal refund ho gaya.'); }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
@@ -340,6 +463,18 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a101d' },
+  authWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  authCard: { width: '100%', maxWidth: 360, backgroundColor: '#1e293b', padding: 24, borderRadius: 16, borderWidth: 1, borderColor: '#334155' },
+  authLogo: { fontSize: 24, fontWeight: 'bold', color: '#fff', textAlign: 'center' },
+  authSubtitle: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, marginBottom: 16 },
+  authToggleRow: { flexDirection: 'row', backgroundColor: '#0f172a', borderRadius: 8, padding: 3, marginBottom: 16 },
+  authToggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
+  authToggleActive: { backgroundColor: '#f59e0b' },
+  authToggleText: { color: '#94a3b8', fontSize: 12, fontWeight: 'bold' },
+  authToggleTextActive: { color: '#000' },
+  authInput: { backgroundColor: '#0f172a', color: '#fff', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#334155', marginBottom: 12, fontSize: 13 },
+  authSubmitBtn: { backgroundColor: '#16a34a', padding: 13, borderRadius: 8, alignItems: 'center', marginTop: 6 },
+  authSubmitText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? 36 : 14, paddingBottom: 14, backgroundColor: '#0e1726', borderBottomWidth: 1, borderColor: '#1e293b' },
   logoText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
   supportBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
@@ -372,10 +507,10 @@ const styles = StyleSheet.create({
   investBtnText: { color: '#000', fontWeight: 'bold', fontSize: 12 },
   cardContainer: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14 },
   historyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  refBox: { backgroundColor: '#0f172a', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#334155', marginBottom: 10 },
-  shareBtn: { backgroundColor: '#16a34a', padding: 12, borderRadius: 10, alignItems: 'center' },
+  shareBtn: { backgroundColor: '#16a34a', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 6 },
   adminEntryBtn: { backgroundColor: '#f59e0b', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 },
   supportBigBtn: { backgroundColor: '#0284c7', padding: 11, borderRadius: 10, alignItems: 'center' },
+  logoutBtn: { padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 10, borderWidth: 1, borderColor: '#ef4444' },
   bottomNavContainer: { height: 68, backgroundColor: '#0e1726', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#1e293b', paddingBottom: Platform.OS === 'android' ? 6 : 14 },
   bottomTabItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   bottomTabLabel: { fontSize: 11, fontWeight: 'bold', marginTop: 2 },
@@ -397,4 +532,4 @@ const styles = StyleSheet.create({
   reqCard: { backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginBottom: 6 },
   actionBtn: { flex: 1, padding: 6, borderRadius: 6, alignItems: 'center' }
 });
-            
+
