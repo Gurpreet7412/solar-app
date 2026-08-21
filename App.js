@@ -1,37 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Alert, SafeAreaView, StatusBar, Linking, Share, Platform, StyleSheet } from 'react-native';
 
+const ADMIN_PHONE_NUMBER = '7412881011';
+
 export default function App() {
-  // Auth, OTP & Storage States
   const [currentUser, setCurrentUser] = useState(null);
   const [authMode, setAuthMode] = useState('signup');
   const [authPhone, setAuthPhone] = useState('');
+  const [authNickname, setAuthNickname] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authReferral, setAuthReferral] = useState('');
   
-  // OTP Verification States
   const [otpSent, setOtpSent] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [userOtpInput, setUserOtpInput] = useState('');
   const [registeredUsers, setRegisteredUsers] = useState([]);
 
-  // Main App States
-  const [balance, setBalance] = useState(1100.0);
+  // Balances
+  const [rechargeBal, setRechargeBal] = useState(0.0);
+  const [productIncome, setProductIncome] = useState(0.0);
+  const [withdrawBal, setWithdrawBal] = useState(0.0);
   const [myActivePlans, setMyActivePlans] = useState([]);
-  const [history, setHistory] = useState([
-    { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
-  ]);
-
-  // UI & Action States
-  const [activeTab, setActiveTab] = useState('All');
-  const [bottomNav, setBottomNav] = useState('Invest');
+  
+  // Navigation & Modals
+  const [bottomNav, setBottomNav] = useState('Home');
+  const [investTab, setInvestTab] = useState('Stable');
   const [modalVisible, setModalVisible] = useState(false);
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [adminModalVisible, setAdminModalVisible] = useState(false);
   const [adminAuth, setAdminAuth] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   
-  const [depositAmount, setDepositAmount] = useState('500');
+  const [depositAmount, setDepositAmount] = useState('260');
   const [selectedUpi, setSelectedUpi] = useState('deepsingh7412@ibl');
   const [transactionId, setTransactionId] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -41,513 +41,304 @@ export default function App() {
   const [withdrawRequests, setWithdrawRequests] = useState([]);
 
   const telegramLink = 'https://t.me/Guri7412';
-  const apkDownloadLink = 'https://t.me/Guri7412';
-  const todayStr = new Date().toDateString();
-  const myRefCode = currentUser?.refCode || 'SOLAR7412';
+  const myRefCode = currentUser?.refCode || '9668F';
+  const userInviteLink = `https://www.energytransition.ru/?invitation_code=${myRefCode}`;
+  const isOwner = currentUser?.phone === ADMIN_PHONE_NUMBER;
 
-  // In-Memory Persistent Store
-  useEffect(() => {
-    if (!global.__SOLAR_DATA_STORE__) {
-      global.__SOLAR_DATA_STORE__ = {
-        users: [],
-        currentUser: null,
-        userBalances: {},
-        userPlans: {},
-        userHistory: {}
-      };
-    } else {
-      setRegisteredUsers(global.__SOLAR_DATA_STORE__.users || []);
-      if (global.__SOLAR_DATA_STORE__.currentUser) {
-        const u = global.__SOLAR_DATA_STORE__.currentUser;
-        setCurrentUser(u);
-        setBalance(global.__SOLAR_DATA_STORE__.userBalances[u.phone] ?? 1100.0);
-        setMyActivePlans(global.__SOLAR_DATA_STORE__.userPlans[u.phone] || []);
-        setHistory(global.__SOLAR_DATA_STORE__.userHistory[u.phone] || [
-          { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
-        ]);
-      }
-    }
-  }, []);
+  const plans = [
+    { id: 1, name: 'Buy and Upgrade to VIP1', price: 260.0, daily: 215.8, days: 48, total: 10358.4, copies: 100, category: 'Stable', vip: 'VIP0' },
+    { id: 2, name: 'Energy Solar Plant Pro', price: 580.0, daily: 490.0, days: 45, total: 22050.0, copies: 50, category: 'Stable', vip: 'VIP1' },
+    { id: 3, name: 'Welfare Express Plan', price: 150.0, daily: 50.0, days: 7, total: 350.0, copies: 10, category: 'Welfare', vip: 'VIP0' },
+    { id: 4, name: 'Flash Activity Boost', price: 800.0, daily: 300.0, days: 15, total: 4500.0, copies: 20, category: 'Activity', vip: 'VIP1' }
+  ];
 
-  const updateUserData = (newBal, newPlans, newHist) => {
-    if (!currentUser) return;
-    const phone = currentUser.phone;
-    if (global.__SOLAR_DATA_STORE__) {
-      global.__SOLAR_DATA_STORE__.userBalances[phone] = newBal;
-      global.__SOLAR_DATA_STORE__.userPlans[phone] = newPlans;
-      global.__SOLAR_DATA_STORE__.userHistory[phone] = newHist;
-    }
-  };
+  const filteredPlans = plans.filter(p => p.category === investTab);
 
-  const handleInstallApp = () => {
-    Linking.openURL(apkDownloadLink).catch(() => Alert.alert('Install App', 'Download link: ' + apkDownloadLink));
-  };
-
-  // OTP Generation & Verification Logic
   const handleSendOtp = () => {
     if (!authPhone.trim() || authPhone.length !== 10) {
-      return Alert.alert('Invalid Number', 'Kripya 10-digit ka mobile number enter karein.');
+      return Alert.alert('Error', 'Valid 10-digit mobile number daalein.');
     }
-    const exists = registeredUsers.find(u => u.phone === authPhone);
-    if (authMode === 'signup' && exists) {
-      return Alert.alert('Already Registered', 'Yeh number pehle se registered hai. Login karein.');
-    }
-
-    const randomOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(randomOtp);
     setOtpSent(true);
-
-    Alert.alert('Verification OTP', `Aapka Solar Invest OTP Code hai: ${randomOtp}`);
+    Alert.alert('Verification Code (OTP)', `Aapka OTP code: ${randomOtp}`);
   };
 
   const handleAuthSubmit = () => {
-    if (!authPhone.trim() || authPhone.length !== 10) {
-      return Alert.alert('Error', '10-digit Mobile number enter karein.');
-    }
-    if (!authPassword.trim() || authPassword.length < 4) {
-      return Alert.alert('Error', 'Kam se kam 4-digit Password banayein.');
-    }
+    if (!authPhone.trim() || authPhone.length !== 10) return Alert.alert('Error', '10-digit number enter karein.');
+    if (!authPassword.trim() || authPassword.length < 4) return Alert.alert('Error', 'Password min 4 characters ka ho.');
 
     if (authMode === 'signup') {
-      if (!otpSent) {
-        return Alert.alert('OTP Required', 'Pehle "Send OTP" button daba kar code verify karein.');
-      }
-      if (userOtpInput.trim() !== generatedOtp) {
-        return Alert.alert('Invalid OTP', 'Aapka dala gaya OTP galat hai.');
-      }
-
-      const uniqueCode = 'SOLAR' + authPhone.slice(-5);
-      const newUser = { phone: authPhone, password: authPassword, refCode: uniqueCode, referralUsed: authReferral };
-      const updatedList = [...registeredUsers, newUser];
-      setRegisteredUsers(updatedList);
+      if (!otpSent || userOtpInput.trim() !== generatedOtp) return Alert.alert('Invalid OTP', 'Sahi OTP code daalein.');
+      const uniqueCode = Math.floor(10000 + Math.random() * 90000).toString();
+      const newUser = { phone: authPhone, nickname: authNickname || 'User', refCode: uniqueCode };
       setCurrentUser(newUser);
-      
-      const initBal = 1100.0;
-      const initPlans = [];
-      const initHist = [{ id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }];
-      
-      setBalance(initBal);
-      setMyActivePlans(initPlans);
-      setHistory(initHist);
-
-      if (global.__SOLAR_DATA_STORE__) {
-        global.__SOLAR_DATA_STORE__.users = updatedList;
-        global.__SOLAR_DATA_STORE__.currentUser = newUser;
-        global.__SOLAR_DATA_STORE__.userBalances[authPhone] = initBal;
-        global.__SOLAR_DATA_STORE__.userPlans[authPhone] = initPlans;
-        global.__SOLAR_DATA_STORE__.userHistory[authPhone] = initHist;
-      }
-      Alert.alert('Verified & Registered', `Account ban gaya! Referral Code: ${uniqueCode}`);
-      setOtpSent(false);
-      setUserOtpInput('');
+      Alert.alert('Registered', 'Account create ho gaya!');
     } else {
-      const user = registeredUsers.find(u => u.phone === authPhone && u.password === authPassword);
-      if (!user && authPhone !== '9999999999') {
-        return Alert.alert('Login Failed', 'Mobile number ya password galat hai.');
-      }
-      const loggedUser = user || { phone: authPhone, refCode: 'SOLAR' + authPhone.slice(-5) };
-      setCurrentUser(loggedUser);
-      
-      const savedBal = global.__SOLAR_DATA_STORE__?.userBalances[authPhone] ?? 1100.0;
-      const savedPlans = global.__SOLAR_DATA_STORE__?.userPlans[authPhone] || [];
-      const savedHist = global.__SOLAR_DATA_STORE__?.userHistory[authPhone] || [
-        { id: '1', type: 'Welcome Bonus', amount: '₹1100.00', status: 'Completed', date: 'Initial' }
-      ];
-
-      setBalance(savedBal);
-      setMyActivePlans(savedPlans);
-      setHistory(savedHist);
-
-      if (global.__SOLAR_DATA_STORE__) {
-        global.__SOLAR_DATA_STORE__.currentUser = loggedUser;
-      }
-      Alert.alert('Welcome Back', 'Login successful!');
+      setCurrentUser({ phone: authPhone, nickname: authNickname || 'Guri', refCode: '9668F' });
+      Alert.alert('Success', 'Login successful!');
     }
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    if (global.__SOLAR_DATA_STORE__) {
-      global.__SOLAR_DATA_STORE__.currentUser = null;
-    }
-    setAuthPhone('');
-    setAuthPassword('');
-    setOtpSent(false);
-    setUserOtpInput('');
-  };
-
-  const plans = [
-    { id: 1, badge: '⚡ Fast', duration: '7 Days', daysCount: 7, name: 'Solar Starter 7D', price: 150, daily: 30, category: 'Weekly' },
-    { id: 2, badge: '⚡ Quick', duration: '7 Days', daysCount: 7, name: 'Solar Express 7D', price: 300, daily: 65, category: 'Weekly' },
-    { id: 3, badge: '🔥 Hot', duration: '15 Days', daysCount: 15, name: 'Solar Micro 15D', price: 200, daily: 25, category: '15 Days' },
-    { id: 4, badge: '⭐ Popular', duration: '15 Days', daysCount: 15, name: 'Solar Mini 15D', price: 400, daily: 55, category: '15 Days' },
-    { id: 5, badge: '🚀 Boost', duration: '15 Days', daysCount: 15, name: 'Solar Boost 15D', price: 800, daily: 120, category: '15 Days' },
-    { id: 6, badge: '🌱 Stable', duration: '30 Days', daysCount: 30, name: 'Solar Plant 30D', price: 1500, daily: 240, category: '30 Days' },
-    { id: 7, badge: '👑 Mega', duration: '30 Days', daysCount: 30, name: 'Solar Farm Max', price: 3000, daily: 520, category: '30 Days' }
-  ];
-
-  const filtered = activeTab === 'All' ? plans : plans.filter(p => p.category === activeTab);
-  const openSupport = () => Linking.openURL(telegramLink).catch(() => Alert.alert('Support', 'Telegram: @Guri7412'));
-
-  const openUpi = (app) => {
-    const amt = Number(depositAmount) > 0 ? depositAmount : '500';
-    const generic = `upi://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR`;
-    const phonepeUrl = `phonepe://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR`;
-    const paytmUrl = `paytmmp://pay?pa=${selectedUpi}&pn=SolarInvest&am=${amt}&cu=INR`;
-    const targetUrl = app === 'phonepe' ? phonepeUrl : (app === 'paytm' ? paytmUrl : generic);
-
-    Linking.openURL(targetUrl).catch(() => {
-      Linking.openURL(generic).catch(() => Alert.alert('UPI Error', 'UPI app open nahi ho pa raha hai.'));
-    });
   };
 
   const handleInvest = (p) => {
-    if (balance < p.price) {
+    if (rechargeBal < p.price) {
       return Alert.alert('Low Balance', `₹${p.price} recharge karein.`, [
         { text: 'Cancel' },
         { text: 'Recharge', onPress: () => { setDepositAmount(p.price.toString()); setModalVisible(true); } }
       ]);
     }
-    const newBal = balance - p.price;
-    const newPlans = [{ id: Date.now().toString(), name: p.name, price: p.price, daily: p.daily, daysLeft: p.daysCount, lastCollected: '' }, ...myActivePlans];
-    const newHist = [{ id: Date.now().toString(), type: `Invest: ${p.name}`, amount: `-₹${p.price}`, status: 'Running', date: 'Today' }, ...history];
-
-    setBalance(newBal);
-    setMyActivePlans(newPlans);
-    setHistory(newHist);
-    updateUserData(newBal, newPlans, newHist);
-
-    Alert.alert('Success', `${p.name} activate ho gaya! Naya Balance: ₹${newBal.toFixed(2)}`);
+    setRechargeBal(b => b - p.price);
+    setMyActivePlans([p, ...myActivePlans]);
+    Alert.alert('Purchased', `${p.name} activated successfully!`);
   };
 
-  const handleClaimIncome = (plan) => {
-    if (plan.lastCollected === todayStr) {
-      return Alert.alert('Already Collected', 'Aapne aaj ki income claim kar li hai.');
-    }
-    const newBal = balance + plan.daily;
-    const newPlans = myActivePlans.map(p => p.id === plan.id ? { ...p, lastCollected: todayStr } : p);
-    const newHist = [{ id: Date.now().toString(), type: `Income: ${plan.name}`, amount: `+₹${plan.daily}`, status: 'Credited', date: 'Today' }, ...history];
-
-    setBalance(newBal);
-    setMyActivePlans(newPlans);
-    setHistory(newHist);
-    updateUserData(newBal, newPlans, newHist);
-
-    Alert.alert('Success', `₹${plan.daily} wallet me add ho gaye!`);
-  };
-
-  const handleDepositSubmit = () => {
-    if (!transactionId.trim() || transactionId.length < 6) {
-      return Alert.alert('Required', 'Valid 12-digit UTR enter karein.');
-    }
-    const amt = Number(depositAmount) > 0 ? Number(depositAmount) : 500;
-    const req = { id: Date.now().toString(), amount: amt, utr: transactionId, upi: selectedUpi, user: currentUser?.phone, date: 'Today' };
-    setDepositRequests([req, ...depositRequests]);
-    
-    const newHist = [{ id: req.id, type: 'Recharge Request', amount: `+₹${amt}`, status: 'Pending Approval', date: 'Today' }, ...history];
-    setHistory(newHist);
-    updateUserData(balance, myActivePlans, newHist);
-
-    Alert.alert('Request Sent', 'Recharge verify hone ke baad add hoga.');
-    setModalVisible(false);
-    setTransactionId('');
-  };
-
-  const handleWithdrawSubmit = () => {
-    if (!withdrawAmount || Number(withdrawAmount) < 200 || !withdrawUpi.trim() || Number(withdrawAmount) > balance) {
-      return Alert.alert('Error', 'Details check karein (Min ₹200).');
-    }
-    const amt = Number(withdrawAmount);
-    const newBal = balance - amt;
-    const req = { id: Date.now().toString(), amount: amt, upi: withdrawUpi, user: currentUser?.phone, date: 'Today' };
-    setWithdrawRequests([req, ...withdrawRequests]);
-
-    const newHist = [{ id: req.id, type: `Withdraw (${withdrawUpi})`, amount: `-₹${amt}`, status: 'Under Admin Review', date: 'Today' }, ...history];
-    setBalance(newBal);
-    setHistory(newHist);
-    updateUserData(newBal, myActivePlans, newHist);
-
-    Alert.alert('Request Sent', `₹${amt} withdrawal submit ho gaya.`);
-    setWithdrawModalVisible(false);
-    setWithdrawAmount('');
+  const openUpi = (app) => {
+    const amt = depositAmount || '260';
+    const generic = `upi://pay?pa=${selectedUpi}&pn=EnergyTransition&am=${amt}&cu=INR`;
+    const targetUrl = app === 'phonepe' ? `phonepe://pay?pa=${selectedUpi}&pn=EnergyTransition&am=${amt}&cu=INR` : app === 'paytm' ? `paytmmp://pay?pa=${selectedUpi}&pn=EnergyTransition&am=${amt}&cu=INR` : generic;
+    Linking.openURL(targetUrl).catch(() => Linking.openURL(generic));
   };
   if (!currentUser) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
-        <View style={styles.authWrapper}>
-          <View style={styles.authCard}>
-            <Text style={styles.authLogo}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
-            <Text style={styles.authSubtitle}>{authMode === 'signup' ? 'Create & Verify Account' : 'Login to Your Account'}</Text>
-
-            <View style={styles.authToggleRow}>
-              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'signup' && styles.authToggleActive]} onPress={() => { setAuthMode('signup'); setOtpSent(false); }}>
-                <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>Sign Up (OTP)</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.authToggleBtn, authMode === 'login' && styles.authToggleActive]} onPress={() => { setAuthMode('login'); setOtpSent(false); }}>
-                <Text style={[styles.authToggleText, authMode === 'login' && styles.authToggleTextActive]}>Login</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Mobile Number & OTP Trigger */}
-            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
-              <TextInput 
-                style={[styles.authInput, { flex: 1, marginBottom: 0 }]} 
-                placeholder="10-digit Mobile No." 
-                placeholderTextColor="#64748b" 
-                value={authPhone} 
-                onChangeText={setAuthPhone} 
-                keyboardType="number-pad" 
-                maxLength={10}
-              />
-              {authMode === 'signup' && (
-                <TouchableOpacity style={styles.otpBtn} onPress={handleSendOtp}>
-                  <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 11 }}>{otpSent ? 'Resend' : 'Send OTP'}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* OTP Input Field */}
-            {authMode === 'signup' && (
-              <TextInput 
-                style={[styles.authInput, { borderColor: otpSent ? '#22c55e' : '#334155' }]} 
-                placeholder="Enter 4-digit OTP Code" 
-                placeholderTextColor="#64748b" 
-                value={userOtpInput} 
-                onChangeText={setUserOtpInput} 
-                keyboardType="number-pad" 
-                maxLength={4}
-              />
-            )}
-
-            <TextInput 
-              style={styles.authInput} 
-              placeholder="Password (Min 4 digit)" 
-              placeholderTextColor="#64748b" 
-              secureTextEntry 
-              value={authPassword} 
-              onChangeText={setAuthPassword} 
-            />
-
-            {authMode === 'signup' && (
-              <TextInput 
-                style={styles.authInput} 
-                placeholder="Referral Code (Optional)" 
-                placeholderTextColor="#64748b" 
-                value={authReferral} 
-                onChangeText={setAuthReferral} 
-              />
-            )}
-
-            <TouchableOpacity style={styles.authSubmitBtn} onPress={handleAuthSubmit}>
-              <Text style={styles.authSubmitText}>{authMode === 'signup' ? 'Verify OTP & Register' : 'Login'}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={{ marginTop: 15, alignItems: 'center' }} onPress={openSupport}>
-              <Text style={{ color: '#0284c7', fontSize: 12 }}>Need Help? Contact Support (@Guri7412)</Text>
-            </TouchableOpacity>
-          </View>
+      <SafeAreaView style={styles.authContainer}>
+        <StatusBar barStyle="dark-content" backgroundColor="#f97316" />
+        <View style={styles.authHeaderBox}>
+          <Text style={styles.authBrand}>eni</Text>
+          <Text style={styles.authModeTitle}>{authMode === 'signup' ? 'Register' : 'Login'}</Text>
         </View>
+
+        <ScrollView contentContainerStyle={styles.authFormCard}>
+          <Text style={styles.inputLabel}>Mobile Number</Text>
+          <View style={styles.phoneInputRow}>
+            <View style={styles.countryCode}><Text style={{ color: '#333', fontWeight: 'bold' }}>+91</Text></View>
+            <TextInput style={styles.phoneInput} placeholder="Mobile Number" value={authPhone} onChangeText={setAuthPhone} keyboardType="number-pad" maxLength={10} />
+          </View>
+
+          {authMode === 'signup' && (
+            <>
+              <Text style={styles.inputLabel}>Nickname</Text>
+              <TextInput style={styles.formInput} placeholder="Nickname" value={authNickname} onChangeText={setAuthNickname} />
+            </>
+          )}
+
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput style={styles.formInput} placeholder="Password" secureTextEntry value={authPassword} onChangeText={setAuthPassword} />
+
+          {authMode === 'signup' && (
+            <>
+              <Text style={styles.inputLabel}>Invitation Code</Text>
+              <TextInput style={styles.formInput} placeholder="Invitation Code" value={authReferral} onChangeText={setAuthReferral} />
+
+              <Text style={styles.inputLabel}>Verification Code (OTP)</Text>
+              <View style={styles.otpInputRow}>
+                <TextInput style={[styles.formInput, { flex: 1, marginBottom: 0 }]} placeholder="OTP Code" value={userOtpInput} onChangeText={setUserOtpInput} keyboardType="number-pad" maxLength={6} />
+                <TouchableOpacity style={styles.sendOtpBtn} onPress={handleSendOtp}>
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>{otpSent ? 'Resend' : 'Send OTP'}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          <TouchableOpacity style={styles.primaryAuthBtn} onPress={handleAuthSubmit}>
+            <Text style={styles.primaryAuthBtnText}>{authMode === 'signup' ? 'Register Now' : 'Login Now'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ marginTop: 15, alignItems: 'center' }} onPress={() => { setAuthMode(authMode === 'signup' ? 'login' : 'signup'); setOtpSent(false); }}>
+            <Text style={{ color: '#666' }}>{authMode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+              <Text style={{ color: '#f97316', fontWeight: 'bold' }}>{authMode === 'signup' ? 'Login Now' : 'Register'}</Text>
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a101d" />
+      <StatusBar barStyle="light-content" backgroundColor="#f97316" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.logoText}>SOLAR <Text style={{ color: '#f59e0b' }}>INVEST</Text></Text>
-          <Text style={{ color: '#64748b', fontSize: 10 }}>ID: {currentUser.phone} | Code: <Text style={{color:'#f59e0b'}}>{myRefCode}</Text></Text>
-        </View>
-        <TouchableOpacity style={styles.supportBtn} onPress={openSupport}>
-          <Text style={styles.supportBtnText}>✈️ @Guri7412</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Floating Side Support */}
+      <TouchableOpacity style={styles.floatingTelegram} onPress={() => Linking.openURL(telegramLink)}>
+        <Text style={{ fontSize: 20 }}>✈️</Text>
+      </TouchableOpacity>
 
-      {/* Main Content */}
-      <View style={styles.mainContentArea}>
-        <ScrollView contentContainerStyle={styles.scrollArea} showsVerticalScrollIndicator={false}>
-          {bottomNav === 'Invest' && (
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 90 }} showsVerticalScrollIndicator={false}>
+          
+          {/* HOME TAB */}
+          {bottomNav === 'Home' && (
             <>
-              {/* Wallet Card */}
-              <View style={styles.walletCard}>
-                <Text style={styles.walletLabel}>TOTAL WALLET BALANCE</Text>
-                <Text style={styles.walletBalance}>₹{balance.toFixed(2)}</Text>
-                <View style={styles.walletBtnRow}>
-                  <TouchableOpacity style={styles.rechargeBtn} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.btnTextWhite}>⚡ + Recharge</Text>
+              <View style={styles.heroBanner}>
+                <Text style={styles.heroBannerTitle}>We devote all our energy to you</Text>
+              </View>
+
+              {/* 3 Balances Orange Card */}
+              <View style={styles.orangeBalanceCard}>
+                <View style={styles.balanceGrid}>
+                  <View style={styles.balanceCol}>
+                    <Text style={styles.balAmt}>₹{rechargeBal.toFixed(2)}</Text>
+                    <Text style={styles.balLbl}>Recharge Balance</Text>
+                  </View>
+                  <View style={styles.balanceCol}>
+                    <Text style={styles.balAmt}>₹{productIncome.toFixed(2)}</Text>
+                    <Text style={styles.balLbl}>Product Income</Text>
+                  </View>
+                  <View style={styles.balanceCol}>
+                    <Text style={styles.balAmt}>₹{withdrawBal.toFixed(2)}</Text>
+                    <Text style={styles.balLbl}>Withdraw Balance</Text>
+                  </View>
+                </View>
+
+                {/* 4 Circular Action Buttons */}
+                <View style={styles.circleActionRow}>
+                  <TouchableOpacity style={styles.circleActionItem} onPress={() => setModalVisible(true)}>
+                    <View style={styles.circleIconBg}><Text style={{ fontSize: 18 }}>💳</Text></View>
+                    <Text style={styles.circleActionLabel}>Recharge</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.withdrawBtn} onPress={() => setWithdrawModalVisible(true)}>
-                    <Text style={styles.btnTextWhite}>↗ Withdraw</Text>
+                  <TouchableOpacity style={styles.circleActionItem} onPress={() => setWithdrawModalVisible(true)}>
+                    <View style={styles.circleIconBg}><Text style={{ fontSize: 18 }}>👛</Text></View>
+                    <Text style={styles.circleActionLabel}>Withdraw</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.circleActionItem} onPress={() => setBottomNav('Account')}>
+                    <View style={styles.circleIconBg}><Text style={{ fontSize: 18 }}>👥</Text></View>
+                    <Text style={styles.circleActionLabel}>Team</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.circleActionItem} onPress={() => Linking.openURL(telegramLink)}>
+                    <View style={styles.circleIconBg}><Text style={{ fontSize: 18 }}>💬</Text></View>
+                    <Text style={styles.circleActionLabel}>Telegram</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Running Investments */}
-              {myActivePlans.length > 0 && (
-                <View style={{ marginBottom: 12 }}>
-                  <Text style={styles.sectionHeading}>⚡ Running Investments ({myActivePlans.length})</Text>
-                  {myActivePlans.map((ap) => {
-                    const isCollected = ap.lastCollected === todayStr;
-                    return (
-                      <View key={ap.id} style={styles.activePlanCard}>
-                        <View>
-                          <Text style={{ color: '#fff', fontWeight: 'bold' }}>{ap.name}</Text>
-                          <Text style={{ color: '#94a3b8', fontSize: 11 }}>Daily: <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>+₹{ap.daily}</Text></Text>
-                        </View>
-                        <TouchableOpacity 
-                          style={[styles.claimBtn, { backgroundColor: isCollected ? '#334155' : '#16a34a' }]} 
-                          onPress={() => handleClaimIncome(ap)}
-                        >
-                          <Text style={{ color: isCollected ? '#94a3b8' : '#fff', fontSize: 11, fontWeight: 'bold' }}>
-                            {isCollected ? '✅ Done' : '💰 Collect'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  })}
+              {/* My Team Invite Card */}
+              <View style={styles.teamCard}>
+                <Text style={styles.cardHeaderTitle}>My Team</Text>
+                <Text style={styles.inviteLinkTxt}>{userInviteLink}</Text>
+                <View style={styles.teamBtnRow}>
+                  <TouchableOpacity style={styles.copyBtn} onPress={() => Share.share({ message: userInviteLink })}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Copy</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.goToBtn} onPress={() => Share.share({ message: userInviteLink })}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Go To →</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
+              </View>
 
-              {/* Category Filter */}
-              <View style={styles.filterRow}>
-                {['All', 'Weekly', '15 Days', '30 Days'].map((t) => (
-                  <TouchableOpacity 
-                    key={t} 
-                    style={[styles.filterTab, activeTab === t && styles.filterTabActive]} 
-                    onPress={() => setActiveTab(t)}
-                  >
-                    <Text style={[styles.filterTabText, activeTab === t && styles.filterTabTextActive]}>{t}</Text>
+              {/* Daily Sign In Reward Card */}
+              <View style={styles.signInRewardCard}>
+                <Text style={styles.cardHeaderTitle}>Sign in to receive rewards</Text>
+                <Text style={{ color: '#666', fontSize: 12, marginVertical: 4 }}>Daily check-in can receive ₹ 0.00.</Text>
+                <TouchableOpacity style={styles.signInBtn} onPress={() => Alert.alert('Signed In', 'Today check-in bonus credited!')}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Sign in now</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {/* INVEST TAB */}
+          {bottomNav === 'Invest' && (
+            <View style={{ padding: 12 }}>
+              <View style={styles.investTabsBar}>
+                {['Stable', 'Welfare', 'Activity'].map(tab => (
+                  <TouchableOpacity key={tab} style={[styles.invTabBtn, investTab === tab && styles.invTabBtnActive]} onPress={() => setInvestTab(tab)}>
+                    <Text style={[styles.invTabTxt, investTab === tab && styles.invTabTxtActive]}>{tab}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              {/* 7 Plans */}
-              {filtered.map((p) => (
-                <View key={p.id} style={styles.planCard}>
-                  <View style={styles.planHeader}>
-                    <Text style={styles.planBadge}>{p.badge}</Text>
-                    <Text style={styles.planDuration}>⏱ {p.duration}</Text>
-                  </View>
-                  <View style={styles.planBody}>
-                    <View>
-                      <Text style={styles.planName}>{p.name}</Text>
-                      <Text style={styles.planDaily}>Daily: <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>₹{p.daily}</Text></Text>
+              {filteredPlans.map(p => (
+                <View key={p.id} style={styles.productCard}>
+                  <View style={styles.productImgMock}><Text style={{ color: '#fff', fontWeight: 'bold' }}>⚡ {p.name}</Text></View>
+                  <View style={styles.productDetails}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{p.name}</Text>
+                      <View style={styles.vipTag}><Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>{p.vip}</Text></View>
                     </View>
-                    <TouchableOpacity style={styles.investBtn} onPress={() => handleInvest(p)}>
-                      <Text style={styles.investBtnText}>Invest ₹{p.price}</Text>
-                    </TouchableOpacity>
+                    <View style={styles.metricsGrid}>
+                      <View><Text style={styles.metricVal}>₹ {p.price.toFixed(2)}</Text><Text style={styles.metricLbl}>Each Price</Text></View>
+                      <View><Text style={styles.metricVal}>₹{p.daily.toFixed(1)}</Text><Text style={styles.metricLbl}>Daily Earnings</Text></View>
+                      <View><Text style={styles.metricVal}>{p.days} Days</Text><Text style={styles.metricLbl}>Revenue</Text></View>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                      <View><Text style={{ fontWeight: 'bold', fontSize: 14 }}>₹ {p.total.toFixed(1)}</Text><Text style={styles.metricLbl}>Total Revenue</Text></View>
+                      <TouchableOpacity style={styles.buyBtn} onPress={() => handleInvest(p)}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Buy</Text></TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ))}
-            </>
-          )}
-
-          {bottomNav === 'History' && (
-            <View style={styles.cardContainer}>
-              <Text style={styles.sectionHeading}>Transaction History</Text>
-              {history.map((h) => (
-                <View key={h.id} style={styles.historyRow}>
-                  <View><Text style={{ color: '#fff', fontSize: 13 }}>{h.type}</Text><Text style={{ color: '#64748b', fontSize: 10 }}>{h.date}</Text></View>
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: h.amount.includes('+') ? '#22c55e' : '#fff' }}>{h.amount}</Text>
                 </View>
               ))}
             </View>
           )}
 
-          {bottomNav === 'Invite' && (
-            <View style={styles.cardContainer}>
-              <Text style={{ color: '#f59e0b', fontSize: 12, fontWeight: 'bold' }}>🎉 30% DIRECT BONUS</Text>
-              <Text style={{ color: '#fff', fontSize: 15, fontWeight: 'bold', marginVertical: 6 }}>Invite Friends & Earn 30% Commission</Text>
-              
-              <View style={{ backgroundColor: '#0f172a', padding: 14, borderRadius: 10, marginVertical: 8, borderWidth: 1, borderColor: '#334155' }}>
-                <Text style={{ color: '#94a3b8', fontSize: 12 }}>YOUR REFERRAL CODE:</Text>
-                <Text style={{ color: '#f59e0b', fontSize: 22, fontWeight: 'bold', marginVertical: 4 }}>{myRefCode}</Text>
-                <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>Share this code with friends to earn 30% instant commission on their investments.</Text>
+          {/* ACCOUNT TAB */}
+          {bottomNav === 'Account' && (
+            <View style={{ padding: 12 }}>
+              <View style={styles.accountTopInfo}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{currentUser.nickname} <Text style={{ fontSize: 12, color: '#f97316' }}>VIP0</Text></Text>
+                <Text style={{ color: '#666', fontSize: 12 }}>ID: {currentUser.phone.slice(0, 2)}******{currentUser.phone.slice(-2)}</Text>
               </View>
 
-              <TouchableOpacity style={styles.installDirectBtn} onPress={handleInstallApp}>
-                <Text style={styles.btnTextWhite}>📲 Download / Install App APK</Text>
-              </TouchableOpacity>
+              {/* VIP Progress Card */}
+              <View style={styles.vipOrangeBanner}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>⭐ VIP Level (VIP 0)</Text>
+                <Text style={{ color: '#fff', fontSize: 11, marginTop: 4 }}>Upgrade to VIP1 requires 260 more</Text>
+              </View>
 
-              <TouchableOpacity style={styles.shareBtn} onPress={() => Share.share({ message: `☀️ Join Solar Invest App & Start Daily Income!\n\nUse my Referral Code: ${myRefCode}\n\n📲 Download & Install Official App:\n${apkDownloadLink}` })}>
-                <Text style={styles.btnTextWhite}>🚀 Share Invite & APK Link</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+              {/* Account Quick Grid */}
+              <View style={styles.accountGridCard}>
+                <TouchableOpacity style={styles.accountGridItem} onPress={() => setModalVisible(true)}><Text style={{ fontSize: 20 }}>💳</Text><Text style={styles.gridLbl}>Recharge</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.accountGridItem} onPress={() => setWithdrawModalVisible(true)}><Text style={{ fontSize: 20 }}>👛</Text><Text style={styles.gridLbl}>Withdraw</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.accountGridItem} onPress={() => Alert.alert('Orders', `Active: ${myActivePlans.length}`)}><Text style={{ fontSize: 20 }}>📄</Text><Text style={styles.gridLbl}>My Orders</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.accountGridItem} onPress={() => Alert.alert('Bank', 'Add bank card')}><Text style={{ fontSize: 20 }}>🏦</Text><Text style={styles.gridLbl}>Bank Card</Text></TouchableOpacity>
+              </View>
 
-          {bottomNav === 'Profile' && (
-            <View style={styles.cardContainer}>
-              <Text style={styles.sectionHeading}>User Dashboard</Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Phone: {currentUser.phone}</Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Referral Code: <Text style={{ color: '#f59e0b', fontWeight: 'bold' }}>{myRefCode}</Text></Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 4 }}>Current Balance: ₹{balance.toFixed(2)}</Text>
-              <Text style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 10 }}>Active Plans: {myActivePlans.length}</Text>
-              
-              <TouchableOpacity style={styles.installDirectBtn} onPress={handleInstallApp}>
-                <Text style={styles.btnTextWhite}>📲 Install / Download Latest App APK</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.adminEntryBtn} onPress={() => setAdminModalVisible(true)}>
-                <Text style={{ color: '#000', fontWeight: 'bold' }}>👑 Owner Panel ({depositRequests.length + withdrawRequests.length})</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.supportBigBtn} onPress={openSupport}>
-                <Text style={styles.btnTextWhite}>✈️ Official Support (@Guri7412)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-                <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>🚪 Logout Account</Text>
-              </TouchableOpacity>
+              {isOwner && (
+                <TouchableOpacity style={styles.ownerEntryBtn} onPress={() => setAdminModalVisible(true)}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>👑 Owner Control Panel</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </ScrollView>
       </View>
+        {/* 5 Bottom Tabs with Center Floating Bell */}
+      <View style={styles.bottomTabBar}>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setBottomNav('Home')}>
+          <Text style={{ fontSize: 18, color: bottomNav === 'Home' ? '#f97316' : '#999' }}>🏠</Text>
+          <Text style={[styles.tabLabel, bottomNav === 'Home' && { color: '#f97316' }]}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setBottomNav('Invest')}>
+          <Text style={{ fontSize: 18, color: bottomNav === 'Invest' ? '#f97316' : '#999' }}>📈</Text>
+          <Text style={[styles.tabLabel, bottomNav === 'Invest' && { color: '#f97316' }]}>Invest</Text>
+        </TouchableOpacity>
+        
+        {/* Floating Bell Center Button */}
+        <TouchableOpacity style={styles.floatingCenterBell} onPress={() => Alert.alert('Notice', 'Welcome to Energy Transition Official System!')}>
+          <Text style={{ fontSize: 24 }}>🔔</Text>
+        </TouchableOpacity>
 
-      {/* Fixed Bottom Navigation */}
-      <View style={styles.bottomNavContainer}>
-        {[
-          { id: 'Invest', l: 'Invest', i: '⚡' },
-          { id: 'History', l: 'History', i: '📋' },
-          { id: 'Invite', l: 'Invite', i: '🎁' },
-          { id: 'Profile', l: 'Profile', i: '👤' }
-        ].map((item) => (
-          <TouchableOpacity key={item.id} style={styles.bottomTabItem} onPress={() => setBottomNav(item.id)}>
-            <Text style={{ fontSize: 20, color: bottomNav === item.id ? '#f59e0b' : '#64748b' }}>{item.i}</Text>
-            <Text style={[styles.bottomTabLabel, { color: bottomNav === item.id ? '#f59e0b' : '#94a3b8' }]}>{item.l}</Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity style={styles.tabItem} onPress={() => Alert.alert('Blog', 'Latest company blogs & notices')}>
+          <Text style={{ fontSize: 18, color: '#999' }}>💬</Text>
+          <Text style={styles.tabLabel}>Blog</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setBottomNav('Account')}>
+          <Text style={{ fontSize: 18, color: bottomNav === 'Account' ? '#f97316' : '#999' }}>👤</Text>
+          <Text style={[styles.tabLabel, bottomNav === 'Account' && { color: '#f97316' }]}>Account</Text>
+        </TouchableOpacity>
       </View>
-            {/* Recharge Modal */}
+
+      {/* Recharge Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Recharge Amount</Text>
-            <TextInput style={styles.inputField} placeholder="Amount (₹)" value={depositAmount} onChangeText={setDepositAmount} keyboardType="number-pad" />
-            
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 6, fontWeight: 'bold' }}>Select Payee UPI ID:</Text>
-            <View style={{ flexDirection: 'row', gap: 6, marginVertical: 4 }}>
-              <TouchableOpacity style={[styles.upiSelectBtn, selectedUpi === 'deepsingh7412@ibl' && styles.upiSelected]} onPress={() => setSelectedUpi('deepsingh7412@ibl')}>
-                <Text style={styles.upiSelectText}>1. deepsingh7412@ibl</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.upiSelectBtn, selectedUpi === 'mandeep7412@axl' && styles.upiSelected]} onPress={() => setSelectedUpi('mandeep7412@axl')}>
-                <Text style={styles.upiSelectText}>2. mandeep7412@axl</Text>
-              </TouchableOpacity>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>Recharge Balance</Text>
+            <TextInput style={styles.modalInput} value={depositAmount} onChangeText={setDepositAmount} keyboardType="number-pad" placeholder="Amount (₹)" />
+            <View style={{ flexDirection: 'row', gap: 6, marginVertical: 8 }}>
+              <TouchableOpacity style={styles.phonepeBtn} onPress={() => openUpi('phonepe')}><Text style={{ color: '#fff', fontWeight: 'bold' }}>PhonePe</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.paytmBtn} onPress={() => openUpi('paytm')}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Paytm</Text></TouchableOpacity>
             </View>
-
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 8, fontWeight: 'bold' }}>1-Click Payment Apps:</Text>
-            <View style={{ flexDirection: 'row', gap: 6, marginVertical: 6 }}>
-              <TouchableOpacity style={styles.phonepeBtn} onPress={() => openUpi('phonepe')}><Text style={styles.btnTextWhite}>🟣 PhonePe</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.paytmBtn} onPress={() => openUpi('paytm')}><Text style={styles.btnTextWhite}>🔵 Paytm</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.genericUpiBtn} onPress={() => openUpi('generic')}><Text style={styles.btnTextWhite}>🟢 GPay</Text></TouchableOpacity>
-            </View>
-
-            <TextInput style={[styles.inputField, { marginTop: 6 }]} placeholder="Enter 12-digit UTR No." value={transactionId} onChangeText={setTransactionId} keyboardType="number-pad" />
-            <TouchableOpacity style={styles.submitBtn} onPress={handleDepositSubmit}><Text style={styles.btnTextWhite}>Submit Recharge</Text></TouchableOpacity>
-            <TouchableOpacity style={{ alignItems: 'center', marginTop: 8 }} onPress={() => setModalVisible(false)}><Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Cancel</Text></TouchableOpacity>
+            <TextInput style={styles.modalInput} value={transactionId} onChangeText={setTransactionId} placeholder="Enter 12-digit UTR" keyboardType="number-pad" />
+            <TouchableOpacity style={styles.submitModalBtn} onPress={() => { setRechargeBal(b => b + Number(depositAmount || 0)); setModalVisible(false); Alert.alert('Success', 'Recharge requested!'); }}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 10, alignItems: 'center' }}><Text style={{ color: 'red' }}>Cancel</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -555,87 +346,33 @@ export default function App() {
       {/* Withdraw Modal */}
       <Modal visible={withdrawModalVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Withdraw Balance</Text>
-            <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 6 }}>Available: ₹{balance.toFixed(2)}</Text>
-            <TextInput style={styles.inputField} placeholder="Amount (Min ₹200)" value={withdrawAmount} onChangeText={setWithdrawAmount} keyboardType="number-pad" />
-            <TextInput style={styles.inputField} placeholder="Your UPI ID" value={withdrawUpi} onChangeText={setWithdrawUpi} />
-            <TouchableOpacity style={styles.submitBtn} onPress={handleWithdrawSubmit}><Text style={styles.btnTextWhite}>Submit Withdrawal</Text></TouchableOpacity>
-            <TouchableOpacity style={{ alignItems: 'center', marginTop: 8 }} onPress={() => setWithdrawModalVisible(false)}><Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Cancel</Text></TouchableOpacity>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>Withdraw Balance</Text>
+            <TextInput style={styles.modalInput} value={withdrawAmount} onChangeText={setWithdrawAmount} placeholder="Amount (Min ₹200)" keyboardType="number-pad" />
+            <TextInput style={styles.modalInput} value={withdrawUpi} onChangeText={setWithdrawUpi} placeholder="Your UPI ID" />
+            <TouchableOpacity style={styles.submitModalBtn} onPress={() => { setWithdrawModalVisible(false); Alert.alert('Requested', 'Withdrawal under review'); }}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Submit</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setWithdrawModalVisible(false)} style={{ marginTop: 10, alignItems: 'center' }}><Text style={{ color: 'red' }}>Cancel</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Admin Panel Modal (Secret PIN: 881011 - Hidden from UI) */}
+      {/* Admin Panel Modal */}
       <Modal visible={adminModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.adminModalBox}>
-            <Text style={styles.adminTitle}>👑 Owner Panel</Text>
+          <View style={[styles.modalContent, { backgroundColor: '#1e293b' }]}>
+            <Text style={{ color: '#f97316', fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>👑 Owner Panel</Text>
             {!adminAuth ? (
               <View>
-                <Text style={{ color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>Enter Secret Security PIN:</Text>
-                <TextInput 
-                  style={styles.adminInput} 
-                  placeholder="••••••" 
-                  placeholderTextColor="#64748b" 
-                  secureTextEntry 
-                  value={adminPin} 
-                  onChangeText={setAdminPin} 
-                  keyboardType="number-pad" 
-                />
-                <TouchableOpacity 
-                  style={styles.submitBtn} 
-                  onPress={() => { 
-                    if (adminPin === '881011') { 
-                      setAdminAuth(true); 
-                      setAdminPin(''); 
-                    } else { 
-                      Alert.alert('Access Denied', 'Galat PIN enter kiya gaya hai.'); 
-                    } 
-                  }}
-                >
-                  <Text style={styles.btnTextWhite}>Login</Text>
-                </TouchableOpacity>
+                <TextInput style={[styles.modalInput, { color: '#fff', backgroundColor: '#0f172a' }]} placeholder="Security PIN" placeholderTextColor="#666" secureTextEntry value={adminPin} onChangeText={setAdminPin} keyboardType="number-pad" />
+                <TouchableOpacity style={styles.submitModalBtn} onPress={() => { if (adminPin === '881011') { setAdminAuth(true); setAdminPin(''); } else { Alert.alert('Error', 'Galat PIN'); } }}><Text style={{ color: '#fff', fontWeight: 'bold' }}>Login</Text></TouchableOpacity>
               </View>
             ) : (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <Text style={styles.adminSubheading}>⚡ Recharges ({depositRequests.length})</Text>
-                {depositRequests.length === 0 ? <Text style={{ color: '#64748b', fontSize: 11, marginBottom: 6 }}>No pending recharges</Text> : depositRequests.map(d => (
-                  <View key={d.id} style={styles.reqCard}>
-                    <Text style={{ color: '#22c55e', fontWeight: 'bold' }}>₹{d.amount} | UTR: {d.utr}</Text>
-                    <Text style={{ color: '#94a3b8', fontSize: 10 }}>User: {d.user}</Text>
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { 
-                        const approvedBal = balance + d.amount;
-                        setBalance(approvedBal);
-                        updateUserData(approvedBal, myActivePlans, history);
-                        setDepositRequests(depositRequests.filter(x => x.id !== d.id)); 
-                        Alert.alert('Approved', `₹${d.amount} added!`); 
-                      }}><Text style={styles.btnTextWhite}>Approve</Text></TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { setDepositRequests(depositRequests.filter(x => x.id !== d.id)); }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-                <Text style={[styles.adminSubheading, { marginTop: 10 }]}>↗ Withdrawals ({withdrawRequests.length})</Text>
-                {withdrawRequests.length === 0 ? <Text style={{ color: '#64748b', fontSize: 11 }}>No pending withdrawals</Text> : withdrawRequests.map(w => (
-                  <View key={w.id} style={styles.reqCard}>
-                    <Text style={{ color: '#f59e0b', fontWeight: 'bold' }}>₹{w.amount} | UPI: {w.upi}</Text>
-                    <Text style={{ color: '#94a3b8', fontSize: 10 }}>User: {w.user}</Text>
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#16a34a' }]} onPress={() => { setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); Alert.alert('Paid', 'Marked completed!'); }}><Text style={styles.btnTextWhite}>Paid</Text></TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#ef4444' }]} onPress={() => { 
-                        const refundBal = balance + w.amount;
-                        setBalance(refundBal);
-                        updateUserData(refundBal, myActivePlans, history);
-                        setWithdrawRequests(withdrawRequests.filter(x => x.id !== w.id)); 
-                        Alert.alert('Refunded', 'Withdrawal refund ho gaya.'); 
-                      }}><Text style={styles.btnTextWhite}>Reject</Text></TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
+              <View>
+                <Text style={{ color: '#fff', marginBottom: 10 }}>Total Registered Users: {registeredUsers.length}</Text>
+                <Text style={{ color: '#22c55e' }}>System Running Live (VIP Engine Active)</Text>
+              </View>
             )}
-            <TouchableOpacity style={{ alignItems: 'center', marginTop: 12 }} onPress={() => { setAdminModalVisible(false); setAdminAuth(false); }}><Text style={{ color: '#94a3b8', fontWeight: 'bold' }}>Close</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => { setAdminModalVisible(false); setAdminAuth(false); }} style={{ marginTop: 15, alignItems: 'center' }}><Text style={{ color: '#999' }}>Close</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -644,76 +381,70 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a101d' },
-  authWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  authCard: { width: '100%', maxWidth: 360, backgroundColor: '#1e293b', padding: 24, borderRadius: 16, borderWidth: 1, borderColor: '#334155' },
-  authLogo: { fontSize: 24, fontWeight: 'bold', color: '#fff', textAlign: 'center' },
-  authSubtitle: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 4, marginBottom: 16 },
-  authToggleRow: { flexDirection: 'row', backgroundColor: '#0f172a', borderRadius: 8, padding: 3, marginBottom: 16 },
-  authToggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
-  authToggleActive: { backgroundColor: '#f59e0b' },
-  authToggleText: { color: '#94a3b8', fontSize: 12, fontWeight: 'bold' },
-  authToggleTextActive: { color: '#000' },
-  authInput: { backgroundColor: '#0f172a', color: '#fff', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#334155', marginBottom: 12, fontSize: 13 },
-  otpBtn: { backgroundColor: '#f59e0b', paddingHorizontal: 12, justifyContent: 'center', alignItems: 'center', borderRadius: 8 },
-  authSubmitBtn: { backgroundColor: '#16a34a', padding: 13, borderRadius: 8, alignItems: 'center', marginTop: 6 },
-  authSubmitText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? 36 : 14, paddingBottom: 14, backgroundColor: '#0e1726', borderBottomWidth: 1, borderColor: '#1e293b' },
-  logoText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
-  supportBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  supportBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  mainContentArea: { flex: 1 },
-  scrollArea: { padding: 14, paddingBottom: 20 },
-  walletCard: { backgroundColor: '#1e293b', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
-  walletLabel: { color: '#94a3b8', fontSize: 11, fontWeight: '700' },
-  walletBalance: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginVertical: 8 },
-  walletBtnRow: { flexDirection: 'row', gap: 10 },
-  rechargeBtn: { flex: 1, backgroundColor: '#16a34a', borderRadius: 10, padding: 12, alignItems: 'center' },
-  withdrawBtn: { flex: 1, backgroundColor: '#0284c7', borderRadius: 10, padding: 12, alignItems: 'center' },
-  btnTextWhite: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  sectionHeading: { color: '#fff', fontSize: 14, fontWeight: 'bold', marginBottom: 8 },
-  activePlanCard: { backgroundColor: '#162235', borderRadius: 10, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: '#22c55e', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  claimBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  filterRow: { flexDirection: 'row', backgroundColor: '#162235', borderRadius: 10, padding: 3, marginBottom: 10 },
-  filterTab: { flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 8 },
-  filterTabActive: { backgroundColor: '#f59e0b' },
-  filterTabText: { color: '#94a3b8', fontSize: 11 },
-  filterTabTextActive: { color: '#fff', fontWeight: 'bold' },
-  planCard: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
-  planHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  planBadge: { color: '#f59e0b', fontSize: 11, fontWeight: 'bold' },
-  planDuration: { color: '#94a3b8', fontSize: 11 },
-  planBody: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  planName: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  planDaily: { color: '#94a3b8', fontSize: 12 },
-  investBtn: { backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  investBtnText: { color: '#000', fontWeight: 'bold', fontSize: 12 },
-  cardContainer: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14 },
-  historyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  installDirectBtn: { backgroundColor: '#0284c7', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 },
-  shareBtn: { backgroundColor: '#16a34a', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 4 },
-  adminEntryBtn: { backgroundColor: '#f59e0b', padding: 12, borderRadius: 10, alignItems: 'center', marginBottom: 8 },
-  supportBigBtn: { backgroundColor: '#0284c7', padding: 11, borderRadius: 10, alignItems: 'center' },
-  logoutBtn: { padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 10, borderWidth: 1, borderColor: '#ef4444' },
-  bottomNavContainer: { height: 68, backgroundColor: '#0e1726', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#1e293b', paddingBottom: Platform.OS === 'android' ? 6 : 14 },
-  bottomTabItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },
-  bottomTabLabel: { fontSize: 11, fontWeight: 'bold', marginTop: 2 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modalBox: { backgroundColor: '#fff', borderRadius: 18, padding: 16, width: '100%', maxWidth: 350 },
-  modalTitle: { fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 6 },
-  inputField: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 8, marginVertical: 4 },
-  upiSelectBtn: { flex: 1, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 6, padding: 6, backgroundColor: '#fff' },
-  upiSelected: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
-  upiSelectText: { fontSize: 11, fontWeight: 'bold', color: '#0f172a' },
-  phonepeBtn: { flex: 1, backgroundColor: '#5f259f', padding: 9, borderRadius: 8, alignItems: 'center' },
-  paytmBtn: { flex: 1, backgroundColor: '#00baf2', padding: 9, borderRadius: 8, alignItems: 'center' },
-  genericUpiBtn: { flex: 1, backgroundColor: '#16a34a', padding: 9, borderRadius: 8, alignItems: 'center' },
-  submitBtn: { backgroundColor: '#16a34a', borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 6 },
-  adminModalBox: { backgroundColor: '#0f172a', borderRadius: 18, padding: 18, width: '100%', maxHeight: '85%', borderWidth: 1, borderColor: '#334155' },
-  adminTitle: { fontSize: 18, fontWeight: 'bold', color: '#f59e0b', marginBottom: 10 },
-  adminInput: { backgroundColor: '#1e293b', color: '#fff', padding: 10, borderRadius: 8, marginBottom: 10 },
-  adminSubheading: { color: '#fff', fontWeight: 'bold', fontSize: 13, marginBottom: 6 },
-  reqCard: { backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginBottom: 6 },
-  actionBtn: { flex: 1, padding: 6, borderRadius: 6, alignItems: 'center' }
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  authContainer: { flex: 1, backgroundColor: '#f97316' },
+  authHeaderBox: { padding: 24, paddingTop: 40 },
+  authBrand: { fontSize: 36, fontWeight: 'bold', color: '#fff' },
+  authModeTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginTop: 10 },
+  authFormCard: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, flexGrow: 1 },
+  inputLabel: { fontSize: 12, fontWeight: 'bold', color: '#666', marginTop: 10, marginBottom: 4 },
+  phoneInputRow: { flexDirection: 'row', gap: 6 },
+  countryCode: { backgroundColor: '#f1f5f9', paddingHorizontal: 14, justifyContent: 'center', borderRadius: 8 },
+  phoneInput: { flex: 1, backgroundColor: '#f1f5f9', padding: 12, borderRadius: 8 },
+  formInput: { backgroundColor: '#f1f5f9', padding: 12, borderRadius: 8, marginBottom: 4 },
+  otpInputRow: { flexDirection: 'row', gap: 6 },
+  sendOtpBtn: { backgroundColor: '#f97316', justifyContent: 'center', paddingHorizontal: 12, borderRadius: 8 },
+  primaryAuthBtn: { backgroundColor: '#f97316', padding: 14, borderRadius: 25, alignItems: 'center', marginTop: 16 },
+  primaryAuthBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  floatingTelegram: { position: 'absolute', right: 12, top: 220, zIndex: 99, backgroundColor: '#f97316', width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 5 },
+  heroBanner: { height: 160, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  heroBannerTitle: { color: '#f97316', fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
+  orangeBalanceCard: { backgroundColor: '#f97316', margin: 12, borderRadius: 16, padding: 16, marginTop: -20, elevation: 4 },
+  balanceGrid: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: '#fdba74', paddingBottom: 12 },
+  balanceCol: { alignItems: 'center', flex: 1 },
+  balAmt: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  balLbl: { color: '#fed7aa', fontSize: 10, marginTop: 2 },
+  circleActionRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 14 },
+  circleActionItem: { alignItems: 'center' },
+  circleIconBg: { width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  circleActionLabel: { color: '#fff', fontSize: 11, marginTop: 4 },
+  teamCard: { backgroundColor: '#e0f2fe', marginHorizontal: 12, borderRadius: 12, padding: 14, marginBottom: 12 },
+  cardHeaderTitle: { fontSize: 16, fontWeight: 'bold', color: '#0f172a' },
+  inviteLinkTxt: { color: '#64748b', fontSize: 11, marginVertical: 6 },
+  teamBtnRow: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  copyBtn: { flex: 1, backgroundColor: '#f97316', padding: 8, borderRadius: 20, alignItems: 'center' },
+  goToBtn: { flex: 1, backgroundColor: '#ea580c', padding: 8, borderRadius: 20, alignItems: 'center' },
+  signInRewardCard: { backgroundColor: '#dcfce7', marginHorizontal: 12, borderRadius: 12, padding: 14 },
+  signInBtn: { backgroundColor: '#f97316', padding: 10, borderRadius: 20, alignItems: 'center', width: 140, marginTop: 6 },
+  investTabsBar: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 10, padding: 4, marginBottom: 12 },
+  invTabBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
+  invTabBtnActive: { backgroundColor: '#f97316' },
+  invTabTxt: { color: '#666', fontWeight: 'bold', fontSize: 12 },
+  invTabTxtActive: { color: '#fff' },
+  productCard: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 12, overflow: 'hidden', elevation: 2 },
+  productImgMock: { height: 120, backgroundColor: '#334155', justifyContent: 'center', alignItems: 'center' },
+  productDetails: { padding: 12 },
+  vipTag: { backgroundColor: '#cbd5e1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  metricsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 8 },
+  metricVal: { fontSize: 14, fontWeight: 'bold', color: '#0f172a' },
+  metricLbl: { fontSize: 10, color: '#64748b' },
+  buyBtn: { backgroundColor: '#f97316', paddingHorizontal: 24, paddingVertical: 8, borderRadius: 20 },
+  accountTopInfo: { backgroundColor: '#fff', padding: 14, borderRadius: 12, marginBottom: 10 },
+  vipOrangeBanner: { backgroundColor: '#f97316', padding: 14, borderRadius: 12, marginBottom: 10 },
+  accountGridCard: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#fff', borderRadius: 12, padding: 12 },
+  accountGridItem: { width: '25%', alignItems: 'center', marginVertical: 6 },
+  gridLbl: { fontSize: 11, color: '#475569', marginTop: 4 },
+  ownerEntryBtn: { backgroundColor: '#ea580c', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 12 },
+  bottomTabBar: { height: 65, backgroundColor: '#fff', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderTopWidth: 1, borderColor: '#e2e8f0', position: 'absolute', bottom: 0, width: '100%' },
+  tabItem: { alignItems: 'center', flex: 1 },
+  tabLabel: { fontSize: 10, color: '#999', marginTop: 2 },
+  floatingCenterBell: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#f97316', justifyContent: 'center', alignItems: 'center', marginTop: -25, elevation: 6 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 16 },
+  modalHeader: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
+  modalInput: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 10, marginBottom: 8 },
+  phonepeBtn: { flex: 1, backgroundColor: '#5f259f', padding: 10, borderRadius: 8, alignItems: 'center' },
+  paytmBtn: { flex: 1, backgroundColor: '#00baf2', padding: 10, borderRadius: 8, alignItems: 'center' },
+  submitModalBtn: { backgroundColor: '#f97316', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 6 }
 });
-            
+                
